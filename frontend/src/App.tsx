@@ -1,34 +1,48 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import './components.css'
-import Transcript from './components/Transcript'
-import ScorePanel from './components/ScorePanel'
-import VerdictPanel from './components/VerdictPanel'
+import ChatThread from './components/ChatThread'
+import ChatComposer from './components/ChatComposer'
 import ExportButtons from './components/ExportButtons'
+import Logo from './components/Logo'
 import { useDebate } from './hooks/useDebate'
-
-const DEFAULT_MOTION =
-  'Universities should permit students to use generative AI tools for graded assignments.'
+import { SEED_MOTIONS } from './seedMotions'
 
 export default function App() {
-  const { health, state, isRunning, isDemo, error, activeAgent, runLive, runDemo, reset } =
-    useDebate()
+  const {
+    health,
+    state,
+    topic,
+    isRunning,
+    isDemo,
+    error,
+    typingAgent,
+    visibleMessages,
+    animatingIndex,
+    runLive,
+    runDemo,
+    reset,
+  } = useDebate()
 
-  const [motion, setMotion] = useState(DEFAULT_MOTION)
+  const [motion, setMotion] = useState('')
   const [demoMode, setDemoMode] = useState(true)
 
   useEffect(() => {
     if (health) setDemoMode(!health.has_api_key)
   }, [health])
 
-  const handleStart = () => {
+  const startDebate = (text: string) => {
+    const trimmed = text.trim()
+    if (trimmed.length < 10) return
+
+    setMotion(trimmed)
+
     if (demoMode) {
       runDemo()
       return
     }
-    if (motion.trim().length < 10) return
+
     runLive({
-      topic: motion.trim(),
+      topic: trimmed,
       background_context: '',
       style: 'Academic',
       configured_rounds: 6,
@@ -37,102 +51,96 @@ export default function App() {
     })
   }
 
-  const lastMsg = state?.messages[state.messages.length - 1]
-  const statusLabel = isRunning
-    ? `Round ${state?.current_round ?? 0}/6 · ${activeAgent ?? 'Working'}…`
-    : state?.status === 'completed'
-      ? 'Complete'
-      : state
-        ? state.status
-        : 'Ready'
+  const handleSeed = (seedTopic: string) => startDebate(seedTopic)
+
+  const cumulative = state?.cumulative_scores
+  const verdict = state?.final_verdict
+  const displayTopic = topic ?? motion
+  const showChat = state || isRunning
+  const hasApiKey = health?.has_api_key ?? false
 
   return (
-    <div className="app">
+    <div className="app-shell">
       <header className="app-header">
-        <h1>ArgueBot</h1>
-        <p>Four AI agents debate your motion. Optimized for Groq free tier.</p>
+        <div className="brand">
+          <Logo size={36} isActive={isRunning} />
+          <span className="brand-name">ArgueBot</span>
+        </div>
+
+        {cumulative && cumulative.rounds_scored > 0 && (
+          <div className="header-score">
+            <span className="pro">{cumulative.proponent.toFixed(0)}</span>
+            <span className="vs">vs</span>
+            <span className="opp">{cumulative.opponent.toFixed(0)}</span>
+          </div>
+        )}
+
+        <div className={`header-status ${isRunning ? 'live' : ''}`}>
+          {isRunning ? 'Live' : state?.status === 'completed' ? 'Done' : ''}
+        </div>
       </header>
 
-      <section className="controls">
-        <label htmlFor="motion">Motion</label>
-        <textarea
-          id="motion"
-          rows={2}
-          value={motion}
-          onChange={(e) => setMotion(e.target.value)}
-          disabled={isRunning}
-          placeholder={DEFAULT_MOTION}
-        />
-
-        <div className="controls-row">
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={demoMode}
-              onChange={(e) => setDemoMode(e.target.checked)}
-              disabled={isRunning}
-            />
-            Demo Mode (no API calls)
-          </label>
-          <div className="btn-group">
-            <button className="btn-primary" onClick={handleStart} disabled={isRunning}>
-              {isRunning ? 'Running…' : 'Start'}
-            </button>
-            <button className="btn-secondary" onClick={reset} disabled={isRunning}>
-              Reset
-            </button>
-          </div>
-        </div>
-
-        <p className="tier-note">
-          Free Groq allows ~12K tokens/min. Live debates use short responses, 6 rounds,
-          and ~12s between API calls (~5 min total). Hit rate limits? Wait a minute or use Demo Mode.
-        </p>
-
-        {health && (
-          <p className={`api-line ${health.has_api_key ? 'ok' : 'warn'}`}>
-            {health.has_api_key
-              ? `Connected · ${health.model}`
-              : 'No API key — enable Demo Mode'}
-          </p>
-        )}
-      </section>
-
-      {error && <div className="error-banner">{error}</div>}
-      {isDemo && state && <div className="info-banner">Demo Mode — prerecorded sample debate.</div>}
-
-      {state && (
-        <section className="status-line">
-          <span className={`status-pill ${isRunning ? 'live' : ''}`}>{statusLabel}</span>
-          {lastMsg && isRunning && (
-            <span className="status-detail">{lastMsg.round_name}</span>
-          )}
-        </section>
-      )}
-
-      {state && state.round_scores.length > 0 && (
-        <ScorePanel
-          roundScores={state.round_scores}
-          cumulative={state.cumulative_scores}
-        />
-      )}
-
-      {state ? (
-        <>
-          <h2 className="section-heading">Transcript</h2>
-          <Transcript messages={state.messages} isRunning={isRunning} />
-          {state.final_verdict && <VerdictPanel verdict={state.final_verdict} />}
-          {state.status === 'completed' && (
-            <div className="export-row">
-              <ExportButtons debateId={state.debate_id} />
+      <main className="chat-main">
+        {!showChat && (
+          <div className="empty-hero">
+            <Logo size={72} isActive={false} />
+            <h1>What should they debate?</h1>
+            <p>Four AI agents argue your motion — turn by turn, like a live panel.</p>
+            <div className="hero-seeds">
+              {SEED_MOTIONS.slice(0, 4).map((seed) => (
+                <button
+                  key={seed.label}
+                  type="button"
+                  className="hero-seed"
+                  onClick={() => handleSeed(seed.topic)}
+                >
+                  {seed.label}
+                </button>
+              ))}
             </div>
-          )}
-        </>
-      ) : (
-        <div className="empty">
-          <p>Enter a motion and press Start, or use Demo Mode to preview a sample debate.</p>
-        </div>
-      )}
+          </div>
+        )}
+
+        {showChat && (
+          <div className="chat-scroll">
+            <ChatThread
+              topic={displayTopic}
+              messages={visibleMessages}
+              isRunning={isRunning}
+              typingAgent={typingAgent}
+              animatingIndex={animatingIndex}
+              showMotion
+            />
+
+            {error && <div className="inline-error">{error}</div>}
+            {isDemo && !isRunning && state && (
+              <div className="inline-info">Demo replay — no API calls used.</div>
+            )}
+
+            {verdict && !isRunning && (
+              <div className="verdict-inline">
+                <strong>{verdict.winner} wins</strong>
+                <p>{verdict.decision_summary}</p>
+                {state?.status === 'completed' && (
+                  <ExportButtons debateId={state.debate_id} />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      <ChatComposer
+        value={motion}
+        onChange={setMotion}
+        onSubmit={() => startDebate(motion)}
+        onSeed={handleSeed}
+        onNewChat={reset}
+        onToggleDemo={() => setDemoMode((d) => !d)}
+        demoMode={demoMode}
+        isRunning={isRunning}
+        hasApiKey={hasApiKey}
+      />
     </div>
   )
 }

@@ -19,27 +19,87 @@ Unlike free-form multi-agent chat, ArgueBot uses a **central orchestrator** with
 
 ```mermaid
 flowchart TB
-    User[User via React UI] --> FE[frontend / Vite]
-    FE -->|REST + WebSocket| API[api/main.py FastAPI]
-    API --> Orch[DebateOrchestrator]
-    Orch --> Mem[DebateMemory]
-    Orch --> Agents[Agent Classes]
-    Orch --> Score[ScoreManager]
-    Agents --> LLM[Groq API]
-    Agents --> Role[Role Consistency Checker]
+    subgraph UI["React UI (Vite)"]
+        App[App.tsx]
+        Logo[Logo]
+        ChatThread[ChatThread]
+        Composer[ChatComposer]
+        Hook[useDebate hook]
+        Typewriter[useTypewriter]
+        Seeds[seedMotions]
+    end
+
+    subgraph API["FastAPI Layer"]
+        Main[api/main.py]
+        Manager[DebateManager]
+        Session[DebateSession]
+        WS[WebSocket /ws/debate]
+    end
+
+    subgraph Core["Debate Engine (src/)"]
+        Orch[DebateOrchestrator]
+        Mem[DebateMemory]
+        Agents[Agent Classes]
+        Role[Role Consistency Checker]
+        Score[ScoreManager]
+        Prompts[prompts.py]
+        LLM[LLMClient → Groq API]
+    end
+
+    User[User] --> App
+    App --> Hook
+    Hook -->|REST| Main
+    Hook -->|WebSocket| WS
+    Main --> Manager
+    Manager --> Session
+    Session -->|background thread| Orch
+    Orch --> Mem
+    Orch --> Agents
+    Orch --> Score
+    Agents --> Prompts
+    Agents --> Role
+    Agents --> LLM
     Score --> Models[Pydantic Models]
     Mem --> Context[Compact Context Builder]
-    Orch --> Export[Markdown / JSON Export]
+    Session -->|turn events| WS
+    WS --> Hook
+    Hook --> ChatThread
+    ChatThread --> Typewriter
+    Composer --> Seeds
 ```
+
+### Layer responsibilities
+
+| Layer | Responsibility |
+|-------|----------------|
+| **React UI** | Chat-style interface — motion input, live transcript, typewriter animation, header score, verdict, export |
+| **FastAPI** | REST endpoints for start/stop/demo/export; WebSocket streams per-debate state updates |
+| **DebateManager** | In-memory session registry; runs each debate in a background thread |
+| **DebateOrchestrator** | Deterministic turn plan, agent dispatch, judge scoring checkpoints, final verdict |
+| **DebateMemory** | Compact per-turn context (summaries, opponent latest, claims, judge feedback) |
+| **Agents + Role checks** | Per-agent generation with pattern-based persona-collapse detection and retry |
+| **ScoreManager** | Programmatic rubric math — never trusts LLM arithmetic |
+| **LLMClient** | Groq API wrapper with rate-limit throttling, retries, structured JSON parsing |
+
+### Real-time data flow
+
+1. User submits a motion via `ChatComposer` (or picks an academic seed topic).
+2. `POST /api/debates/start` creates a `DebateSession` and starts the orchestrator in a background thread.
+3. Frontend opens `WebSocket /ws/debate/{id}` and receives `update` events after each turn.
+4. `useDebate` drives the UI — typewriter reveal, typing indicator (via `turnPlan`), live header score.
+5. On completion, the final verdict and export links appear inline in the chat thread.
 
 ## Features
 
 - Autonomous 6–10 round structured debates
 - Four distinct agent personas with role-consistency enforcement
-- Live scorecard with cumulative tracking and charts
+- **Chat-style UI** with turn-by-turn typewriter animation and typing indicators
+- Live score display in the header (cumulative proponent vs. opponent)
+- **Academic seed motions** — pre-loaded university debate topics for quick demos
+- Animated SVG logo (speeds up during live debates)
 - Weighted 100-point scoring rubric with programmatic validation
 - Automatic retry on severe persona collapse
-- Failure analysis with violation logging
+- Failure analysis with violation logging (backend)
 - Demo Mode with prerecorded sample debate (no API key required)
 - Export transcript (Markdown) and full debate record (JSON)
 - Optional stress-test mode for role-consistency validation
@@ -83,6 +143,7 @@ Edit `.env`:
 ```
 GROQ_API_KEY=your_key_here
 GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_REQUEST_DELAY=12
 ```
 
 `GROQ_MODEL` defaults to `llama-3.3-70b-versatile` if omitted. See the [Groq model list](https://console.groq.com/docs/models) for other options.
@@ -128,7 +189,7 @@ Open the URL shown in the terminal (typically `http://localhost:8501`).
 
 ### Demo Mode
 
-If no API key is configured, enable **Demo Mode** in the sidebar to load the prerecorded sample debate. Demo Mode is clearly labeled as simulated data.
+If no API key is configured, Demo Mode is enabled automatically. Toggle it in the bottom composer bar, or pick a seed topic to replay the prerecorded sample debate. Demo Mode is clearly labeled as simulated data.
 
 ## How to Run Tests
 
@@ -209,6 +270,7 @@ Cumulative scores are the **arithmetic mean** of each side's weighted totals acr
 - Scores reflect argument quality, not factual correctness
 - The system should not be used for high-stakes decisions without human oversight
 - Demo Mode prevents misleading audiences when no API is available
+- Seed motions are scoped to academic policy topics suitable for classroom demos
 
 ## Known Limitations
 
@@ -217,6 +279,7 @@ Cumulative scores are the **arithmetic mean** of each side's weighted totals acr
 - Judge cannot verify factual claims made during debate
 - Single-model architecture means all agents share similar biases
 - Long debates consume significant API tokens
+- API `configured_rounds` is capped at 6 via the React UI (backend supports 6–10)
 
 ## Future Improvements
 
@@ -225,54 +288,74 @@ Cumulative scores are the **arithmetic mean** of each side's weighted totals acr
 - Human-in-the-loop judge override
 - Debate replay and comparison mode
 - Custom rubric configuration via UI
+- Failure analysis panel in the chat UI
 
 ## Live Presentation Guide
 
 1. **Before the session:** Test Demo Mode as a fallback. Verify API key and model in `.env`. Start both API and React dev servers.
-2. **Opening:** Explain the four-agent architecture and central orchestrator design.
-3. **Audience topic:** Enter a motion suggested by the audience (minimum 10 characters).
-4. **During debate:** Enable **Presentation Mode** to hide the sidebar. Point out the status bar, round stepper, live scorecard, and agent cards.
-5. **After verdict:** Walk through decisive factors, limitations, and failure analysis.
-6. **Stress test:** Only enable if time permits — demonstrate persona-collapse resistance.
+2. **Opening:** Explain the four-agent architecture, central orchestrator, and WebSocket streaming pipeline.
+3. **Audience topic:** Enter a motion suggested by the audience (minimum 10 characters), or pick an academic seed topic.
+4. **During debate:** Point out the animated logo, typing indicator, live header score, and turn-by-turn typewriter reveal.
+5. **After verdict:** Walk through the inline verdict card — decisive factors, limitations, and export options.
+6. **Stress test:** Only enable if time permits — demonstrate persona-collapse resistance via API config.
 7. **Export:** Download transcript and JSON for audience follow-up.
 
 ## Project Structure
 
 ```
 arguebot/
-├── app.py                  # Streamlit UI (legacy)
+├── app.py                      # Streamlit UI (legacy)
 ├── api/
-│   ├── main.py             # FastAPI REST + WebSocket
-│   └── debate_manager.py   # Session management
-├── frontend/               # React + Vite UI
+│   ├── main.py                 # FastAPI REST + WebSocket endpoints
+│   └── debate_manager.py       # DebateSession + DebateManager (threading + WS broadcast)
+├── frontend/                   # React + Vite chat UI
 │   ├── src/
-│   │   ├── App.tsx
-│   │   ├── components/     # Sidebar, StatusBar, Transcript, etc.
-│   │   ├── hooks/          # useDebate WebSocket hook
-│   │   └── api/            # API client
+│   │   ├── App.tsx             # Main shell — header, chat, composer
+│   │   ├── App.css             # Chat UI styles
+│   │   ├── seedMotions.ts      # Academic seed debate topics
+│   │   ├── turnPlan.ts         # Turn order for typing indicator
+│   │   ├── components/
+│   │   │   ├── Logo.tsx        # Animated SVG logo
+│   │   │   ├── ChatThread.tsx  # Transcript with round dividers
+│   │   │   ├── ChatBubble.tsx  # Agent message bubbles + typewriter
+│   │   │   ├── ChatComposer.tsx# Motion input, seeds, demo toggle
+│   │   │   ├── TypingIndicator.tsx
+│   │   │   └── ExportButtons.tsx
+│   │   ├── hooks/
+│   │   │   ├── useDebate.ts    # WebSocket state, demo replay, typing
+│   │   │   └── useTypewriter.ts
+│   │   └── api/
+│   │       └── client.ts       # REST + WebSocket client
 │   └── package.json
-├── README.md
-├── requirements.txt
-├── pyproject.toml
-├── uv.lock
-├── .env.example
-├── .gitignore
 ├── src/
-│   ├── config.py           # Environment configuration
-│   ├── models.py           # Pydantic data models
-│   ├── prompts.py          # System prompts and builders
-│   ├── agents.py           # Agent classes and role checks
-│   ├── orchestrator.py     # Central debate orchestrator
-│   ├── scoring.py          # Score calculation and aggregation
-│   ├── memory.py           # Context and memory management
-│   └── utils.py            # Groq client wrapper and exports
+│   ├── config.py               # Environment configuration
+│   ├── models.py               # Pydantic data models
+│   ├── prompts.py              # System prompts and builders
+│   ├── agents.py               # Agent classes and role checks
+│   ├── orchestrator.py         # Central debate orchestrator
+│   ├── scoring.py              # Score calculation and aggregation
+│   ├── memory.py               # Context and memory management
+│   └── utils.py                # Groq client wrapper and exports
 ├── tests/
 │   ├── test_scoring.py
 │   ├── test_role_consistency.py
 │   └── test_orchestrator.py
 └── examples/
-    └── sample_debate.json
+    └── sample_debate.json      # Prerecorded demo debate
 ```
+
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | API status and API-key availability |
+| `POST` | `/api/debates/start` | Start a live debate; returns `debate_id` |
+| `POST` | `/api/debates/demo` | Load prerecorded demo debate |
+| `GET` | `/api/debates/{id}` | Fetch current debate state |
+| `POST` | `/api/debates/{id}/stop` | Request graceful stop |
+| `GET` | `/api/debates/{id}/export/markdown` | Download transcript |
+| `GET` | `/api/debates/{id}/export/json` | Download full debate record |
+| `WS` | `/ws/debate/{id}` | Stream `started` / `update` / `completed` / `error` events |
 
 ## License
 

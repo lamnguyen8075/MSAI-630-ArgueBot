@@ -98,12 +98,44 @@ export interface WsEvent {
   error?: string
 }
 
-export const AGENT_META: Record<AgentRole, { icon: string; color: string; border: string }> = {
-  Proponent: { icon: 'P', color: '#0d3320', border: '#22c55e' },
-  Opponent: { icon: 'O', color: '#3b1219', border: '#ef4444' },
-  Moderator: { icon: 'M', color: '#0c2340', border: '#3b82f6' },
-  Judge: { icon: 'J', color: '#3b2f0c', border: '#f59e0b' },
+const TWEMOJI = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72'
+
+export const AGENT_META: Record<
+  AgentRole,
+  { name: string; image: string; emoji: string; color: string; border: string }
+> = {
+  Proponent: {
+    name: 'Duck',
+    image: `${TWEMOJI}/1f986.png`,
+    emoji: '🦆',
+    color: '#f0fdf4',
+    border: '#10b981',
+  },
+  Opponent: {
+    name: 'Tiger',
+    image: `${TWEMOJI}/1f42f.png`,
+    emoji: '🐯',
+    color: '#fff7ed',
+    border: '#f43f5e',
+  },
+  Moderator: {
+    name: 'Fish',
+    image: `${TWEMOJI}/1f41f.png`,
+    emoji: '🐟',
+    color: '#eff6ff',
+    border: '#3b82f6',
+  },
+  Judge: {
+    name: 'Giraffe',
+    image: `${TWEMOJI}/1f992.png`,
+    emoji: '🦒',
+    color: '#fffbeb',
+    border: '#f59e0b',
+  },
 }
+
+/** Chicken — audience / user who submits the motion */
+export const USER_AVATAR = `${TWEMOJI}/1f414.png`
 
 export const ROUND_LABELS = [
   'Intro',
