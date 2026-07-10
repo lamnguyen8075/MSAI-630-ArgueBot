@@ -40,7 +40,8 @@ body {
 .logo {
   flex-shrink: 0;
   position: relative;
-  animation: logo-float 4s ease-in-out infinite;
+  animation: logo-float 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 .logo svg {
@@ -49,64 +50,51 @@ body {
   overflow: visible;
 }
 
-.logo-balloon {
-  transform-origin: 20px 14px;
-  animation: logo-balloon-drift 5s ease-in-out infinite;
+/* Whole rig bobs vertically */
+.logo-rig {
+  transform-origin: 20px 20px;
+  animation: logo-rig-bob 3s ease-in-out infinite;
 }
 
-.logo-shine {
-  animation: logo-shine-fade 5s ease-in-out infinite;
+/* Envelope tilts gently */
+.logo-balloon {
+  transform-origin: 20px 14px;
+  animation: logo-balloon-sway 3s ease-in-out infinite;
+}
+
+/* Basket swings opposite the envelope */
+.logo-basket-rig {
+  transform-origin: 20px 34px;
+  animation: logo-basket-swing 3s ease-in-out infinite;
 }
 
 .logo-panels {
-  animation: logo-panels-shift 6s ease-in-out infinite;
+  animation: logo-panels-pulse 3s ease-in-out infinite;
 }
 
-.logo-basket {
-  transform-origin: 20px 33px;
-  animation: logo-basket-sway 4s ease-in-out infinite;
-}
-
-.logo-rope {
-  transform-origin: 20px 27px;
-  animation: logo-rope-sway 4s ease-in-out infinite;
-}
-
-.logo-rope:nth-of-type(2) { animation-delay: -1s; }
-.logo-rope:nth-of-type(3) { animation-delay: -2s; }
-.logo-rope:nth-of-type(4) { animation-delay: -3s; }
-
-.logo-trail .logo-dot {
-  animation: logo-bubble-rise 2.8s ease-in-out infinite;
-}
-
-.logo-trail--1 .logo-dot { animation-delay: 0s; }
-.logo-trail--1 .logo-dot--mid { animation-delay: 0.2s; }
-.logo-trail--2 .logo-dot { animation-delay: 0.35s; }
-.logo-trail--2 .logo-dot--mid { animation-delay: 0.55s; }
-.logo-trail--3 .logo-dot { animation-delay: 0.15s; }
-.logo-trail--3 .logo-dot--mid { animation-delay: 0.35s; }
-.logo-trail--4 .logo-dot { animation-delay: 0.5s; }
-.logo-trail--4 .logo-dot--mid { animation-delay: 0.7s; }
-
+/* Faster when debate is live */
 .logo--live {
-  animation-duration: 2.5s;
+  animation-duration: 1.8s;
 }
 
-.logo--live .logo-balloon {
-  animation-duration: 2.5s;
-}
-
-.logo--live .logo-basket,
-.logo--live .logo-rope {
-  animation-duration: 2s;
-}
-
-.logo--live .logo-trail .logo-dot {
-  animation-duration: 1.4s;
+.logo--live .logo-rig,
+.logo--live .logo-balloon,
+.logo--live .logo-basket-rig,
+.logo--live .logo-panels {
+  animation-duration: 1.8s;
 }
 
 @keyframes logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes logo-rig-bob {
   0%,
   100% {
     transform: translateY(0);
@@ -116,72 +104,39 @@ body {
   }
 }
 
-@keyframes logo-balloon-drift {
+@keyframes logo-balloon-sway {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg) translateX(0);
   }
-  50% {
-    transform: translateY(-1px) rotate(-1.5deg);
+  25% {
+    transform: rotate(-2.5deg) translateX(-0.5px);
+  }
+  75% {
+    transform: rotate(2.5deg) translateX(0.5px);
   }
 }
 
-@keyframes logo-shine-fade {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.75;
-  }
-}
-
-@keyframes logo-panels-shift {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes logo-basket-sway {
+@keyframes logo-basket-swing {
   0%,
   100% {
     transform: rotate(0deg);
   }
   25% {
-    transform: rotate(1deg);
+    transform: rotate(4deg);
   }
   75% {
-    transform: rotate(-1deg);
+    transform: rotate(-4deg);
   }
 }
 
-@keyframes logo-rope-sway {
+@keyframes logo-panels-pulse {
   0%,
   100% {
-    transform: rotate(0deg);
+    opacity: 0.75;
   }
   50% {
-    transform: rotate(0.6deg);
-  }
-}
-
-@keyframes logo-bubble-rise {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(2px) scale(0.85);
-  }
-  45% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  70% {
-    opacity: 0.5;
-    transform: translateY(-2px) scale(0.9);
   }
 }
 
@@ -697,12 +652,10 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .logo,
+  .logo-rig,
   .logo-balloon,
-  .logo-shine,
-  .logo-panels,
-  .logo-basket,
-  .logo-rope,
-  .logo-trail .logo-dot {
+  .logo-basket-rig,
+  .logo-panels {
     animation: none;
   }
 }

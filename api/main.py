@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -17,11 +18,25 @@ from src.utils import setup_logging
 
 setup_logging()
 
+
+def _cors_origins() -> list[str]:
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "https://lamnguyen8075.github.io",
+    ]
+    extra = os.getenv("CORS_ORIGINS", "")
+    if extra:
+        origins.extend(origin.strip() for origin in extra.split(",") if origin.strip())
+    return origins
+
+
 app = FastAPI(title="ArgueBot API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

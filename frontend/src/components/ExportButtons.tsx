@@ -1,3 +1,5 @@
+import { exportUrl } from '../api/config'
+
 interface Props {
   debateId: string
 }
@@ -7,15 +9,17 @@ export default function ExportButtons({ debateId }: Props) {
     <div className="export-buttons">
       <a
         className="btn-export"
-        href={`/api/debates/${debateId}/export/markdown`}
-        download="arguebot_transcript.md"
+        href={exportUrl(debateId, 'markdown')}
+        target="_blank"
+        rel="noopener noreferrer"
       >
         Download Transcript (Markdown)
       </a>
       <a
         className="btn-export"
-        href={`/api/debates/${debateId}/export/json`}
-        download="arguebot_debate.json"
+        href={exportUrl(debateId, 'json')}
+        target="_blank"
+        rel="noopener noreferrer"
       >
         Download Debate Record (JSON)
       </a>

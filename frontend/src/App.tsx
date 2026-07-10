@@ -83,7 +83,7 @@ export default function App() {
       <main className="chat-main">
         {!showChat && (
           <div className="empty-hero">
-            <Logo size={72} isActive={false} />
+            <Logo size={72} isActive={isRunning} />
             <h1>What should they debate?</h1>
             <p>Four AI agents argue your motion — turn by turn, like a live panel.</p>
             <div className="hero-seeds">

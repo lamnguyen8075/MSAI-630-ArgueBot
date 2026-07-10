@@ -5,11 +5,20 @@ interface Props {
   isActive?: boolean
 }
 
+const INK = '#1a1a1a'
+const PANEL = '#b0b0b0'
+
 /**
- * ArgueBot mark — animated hot air balloon with four agent thought trails.
+ * Classic clip-art hot air balloon — bulbous teardrop envelope, gores,
+ * trapezoid skirt, vertical ropes, wicker basket.
  */
 export default function Logo({ size = 36, isActive = false }: Props) {
   const uid = useId().replace(/:/g, '')
+
+  // Bulbous top, narrow neck — matches reference teardrop silhouettes
+  const envelope =
+    'M20 2 C9 2 3.5 10 4 17 C4.5 22.5 8.5 26.5 13 27.2' +
+    ' L27 27.2 C31.5 26.5 35.5 22.5 36 17 C36.5 10 31 2 20 2 Z'
 
   return (
     <div
@@ -19,90 +28,73 @@ export default function Logo({ size = 36, isActive = false }: Props) {
     >
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id={`${uid}-basket`} width="3" height="3" patternUnits="userSpaceOnUse">
-            <path d="M0 3 L3 0" stroke="#d1d5db" strokeWidth="0.55" />
-          </pattern>
           <clipPath id={`${uid}-clip`}>
-            <path d="M20 3.5 C11 3.5 7.5 10 7.5 15.5 C7.5 19.5 10 22.5 14 23.5 L20 24.5 L26 23.5 C30 22.5 32.5 19.5 32.5 15.5 C32.5 10 29 3.5 20 3.5 Z" />
+            <path d={envelope} />
+          </clipPath>
+          <clipPath id={`${uid}-basket`}>
+            <rect x="10.6" y="32.1" width="18.8" height="5.3" rx="0.3" />
           </clipPath>
         </defs>
 
-        {/* Balloon envelope */}
-        <path
-          className="logo-balloon"
-          d="M20 3.5 C11 3.5 7.5 10 7.5 15.5 C7.5 19.5 10 22.5 14 23.5 L20 24.5 L26 23.5 C30 22.5 32.5 19.5 32.5 15.5 C32.5 10 29 3.5 20 3.5 Z"
-          fill="#f3f4f6"
-          stroke="#1f2937"
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-        />
+        <g className="logo-rig">
+          <g className="logo-balloon">
+            <path
+              d={envelope}
+              fill="white"
+              stroke={INK}
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
 
-        {/* Gore panel lines */}
-        <g className="logo-panels" clipPath={`url(#${uid}-clip)`} stroke="#d1d5db" strokeWidth="0.7">
-          <path d="M20 4 C20 4 16 12 16 20" />
-          <path d="M20 4 C20 4 13 12 12.5 20" />
-          <path d="M20 4 C20 4 24 12 24 20" />
-          <path d="M20 4 C20 4 27 12 27.5 20" />
-          <path d="M11 14 H29" strokeWidth="0.5" />
-          <path d="M9.5 18 H30.5" strokeWidth="0.5" />
-        </g>
+            <g className="logo-panels" clipPath={`url(#${uid}-clip)`} stroke={PANEL} strokeWidth="0.7">
+              <path d="M20 2 Q12 14 13 27.2" />
+              <path d="M20 2 Q15.5 14 15.5 27.2" />
+              <path d="M20 2 Q17.5 14 17.5 27.2" />
+              <path d="M20 2 L20 27.2" />
+              <path d="M20 2 Q22.5 14 22.5 27.2" />
+              <path d="M20 2 Q24.5 14 24.5 27.2" />
+              <path d="M20 2 Q28 14 27 27.2" />
+            </g>
 
-        {/* Highlight sheen */}
-        <ellipse className="logo-shine" cx="16" cy="10" rx="4" ry="5" fill="white" fillOpacity="0.45" />
+            <path
+              d="M13 27.2 L27 27.2 L25.2 29 L14.8 29 Z"
+              fill="white"
+              stroke={INK}
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+          </g>
 
-        {/* Neck + burner ring */}
-        <path
-          d="M17 24.2 L20 25.8 L23 24.2"
-          stroke="#1f2937"
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <line x1="20" y1="25.8" x2="20" y2="27.5" stroke="#6b7280" strokeWidth="1" />
+          <g className="logo-basket-rig">
+            <line className="logo-rope" x1="14.8" y1="29" x2="11" y2="31.5" stroke={INK} strokeWidth="0.85" />
+            <line className="logo-rope" x1="17" y1="29" x2="14.5" y2="31.5" stroke={INK} strokeWidth="0.85" />
+            <line className="logo-rope" x1="23" y1="29" x2="25.5" y2="31.5" stroke={INK} strokeWidth="0.85" />
+            <line className="logo-rope" x1="25.2" y1="29" x2="29" y2="31.5" stroke={INK} strokeWidth="0.85" />
 
-        {/* Ropes */}
-        <line className="logo-rope" x1="15" y1="24" x2="12" y2="30" stroke="#9ca3af" strokeWidth="0.7" />
-        <line className="logo-rope" x1="18" y1="25" x2="16" y2="30" stroke="#9ca3af" strokeWidth="0.7" />
-        <line className="logo-rope" x1="22" y1="25" x2="24" y2="30" stroke="#9ca3af" strokeWidth="0.7" />
-        <line className="logo-rope" x1="25" y1="24" x2="28" y2="30" stroke="#9ca3af" strokeWidth="0.7" />
+            <rect
+              className="logo-basket"
+              x="10"
+              y="31.5"
+              width="20"
+              height="6.5"
+              rx="0.6"
+              fill="white"
+              stroke={INK}
+              strokeWidth="1.25"
+            />
 
-        {/* Basket */}
-        <path
-          className="logo-basket"
-          d="M10 30 H30 L28.5 36.5 H11.5 Z"
-          fill={`url(#${uid}-basket)`}
-          stroke="#1f2937"
-          strokeWidth="1.1"
-          strokeLinejoin="round"
-        />
-        <line x1="10" y1="30" x2="30" y2="30" stroke="#1f2937" strokeWidth="1.3" strokeLinecap="round" />
-
-        {/* Sandbags */}
-        <rect x="9" y="31" width="2" height="3" rx="0.4" fill="#e5e7eb" stroke="#9ca3af" strokeWidth="0.5" />
-        <rect x="29" y="31" width="2" height="3" rx="0.4" fill="#e5e7eb" stroke="#9ca3af" strokeWidth="0.5" />
-
-        {/* Four agents in basket */}
-        <circle cx="14" cy="33" r="1.5" fill="#4b5563" />
-        <circle cx="17.5" cy="33" r="1.5" fill="#4b5563" />
-        <circle cx="22.5" cy="33" r="1.5" fill="#4b5563" />
-        <circle cx="26" cy="33" r="1.5" fill="#4b5563" />
-
-        {/* Thought bubbles rising into balloon */}
-        <g className="logo-trail logo-trail--1">
-          <circle className="logo-dot" cx="14" cy="28.5" r="1" fill="#9ca3af" />
-          <circle className="logo-dot logo-dot--mid" cx="14" cy="21" r="0.85" fill="#6b7280" />
-        </g>
-        <g className="logo-trail logo-trail--2">
-          <circle className="logo-dot" cx="17.5" cy="28.5" r="1" fill="#9ca3af" />
-          <circle className="logo-dot logo-dot--mid" cx="17.5" cy="20" r="0.85" fill="#6b7280" />
-        </g>
-        <g className="logo-trail logo-trail--3">
-          <circle className="logo-dot" cx="22.5" cy="28.5" r="1" fill="#9ca3af" />
-          <circle className="logo-dot logo-dot--mid" cx="22.5" cy="20" r="0.85" fill="#6b7280" />
-        </g>
-        <g className="logo-trail logo-trail--4">
-          <circle className="logo-dot" cx="26" cy="28.5" r="1" fill="#9ca3af" />
-          <circle className="logo-dot logo-dot--mid" cx="26" cy="21" r="0.85" fill="#6b7280" />
+            <g className="logo-wicker" clipPath={`url(#${uid}-basket)`} stroke={INK} strokeWidth="0.45" opacity="0.5">
+              <line x1="11" y1="32.5" x2="29" y2="32.5" />
+              <line x1="11" y1="34" x2="29" y2="34" />
+              <line x1="11" y1="35.5" x2="29" y2="35.5" />
+              <line x1="11" y1="37" x2="29" y2="37" />
+              <line x1="13" y1="31.5" x2="13" y2="38" />
+              <line x1="16" y1="31.5" x2="16" y2="38" />
+              <line x1="20" y1="31.5" x2="20" y2="38" />
+              <line x1="24" y1="31.5" x2="24" y2="38" />
+              <line x1="27" y1="31.5" x2="27" y2="38" />
+            </g>
+          </g>
         </g>
       </svg>
     </div>

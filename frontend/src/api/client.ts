@@ -1,15 +1,14 @@
-import type { DebateState, HealthResponse, StartDebateRequest, WsEvent } from './types'
-
-const API_BASE = ''
+import type { DebateState, HealthResponse, StartDebateRequest, WsEvent } from '../types'
+import { apiUrl, wsUrl } from './config'
 
 export async function fetchHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${API_BASE}/api/health`)
+  const res = await fetch(apiUrl('/api/health'))
   if (!res.ok) throw new Error('API unavailable')
   return res.json()
 }
 
 export async function startDebate(config: StartDebateRequest): Promise<{ debate_id: string }> {
-  const res = await fetch(`${API_BASE}/api/debates/start`, {
+  const res = await fetch(apiUrl('/api/debates/start'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
@@ -20,13 +19,13 @@ export async function startDebate(config: StartDebateRequest): Promise<{ debate_
 }
 
 export async function loadDemo(): Promise<{ debate_id: string; state: DebateState }> {
-  const res = await fetch(`${API_BASE}/api/debates/demo`, { method: 'POST' })
+  const res = await fetch(apiUrl('/api/debates/demo'), { method: 'POST' })
   if (!res.ok) throw new Error('Failed to load demo')
   return res.json()
 }
 
 export async function stopDebate(debateId: string): Promise<void> {
-  await fetch(`${API_BASE}/api/debates/${debateId}/stop`, { method: 'POST' })
+  await fetch(apiUrl(`/api/debates/${debateId}/stop`), { method: 'POST' })
 }
 
 export function connectDebateStream(
@@ -34,9 +33,7 @@ export function connectDebateStream(
   onEvent: (event: WsEvent) => void,
   onError: (err: string) => void,
 ): () => void {
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const host = window.location.host
-  const ws = new WebSocket(`${protocol}://${host}/ws/debate/${debateId}`)
+  const ws = new WebSocket(wsUrl(`/ws/debate/${debateId}`))
 
   ws.onmessage = (msg) => {
     try {
@@ -51,11 +48,16 @@ export function connectDebateStream(
   return () => ws.close()
 }
 
-export function downloadExport(debateId: string, format: 'markdown' | 'json'): void {
-  const path = format === 'markdown' ? 'markdown' : 'json'
+export async function downloadExport(debateId: string, format: 'markdown' | 'json'): Promise<void> {
   const ext = format === 'markdown' ? 'md' : 'json'
-  const a = document.createElement('a')
-  a.href = `${API_BASE}/api/debates/${debateId}/export/${path}`
-  a.download = `arguebot_debate.${ext}`
-  a.click()
+  const res = await fetch(apiUrl(`/api/debates/${debateId}/export/${format === 'markdown' ? 'markdown' : 'json'}`))
+  if (!res.ok) throw new Error('Export failed')
+
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `arguebot_debate.${ext}`
+  anchor.click()
+  URL.revokeObjectURL(url)
 }
