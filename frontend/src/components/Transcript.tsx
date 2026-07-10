@@ -1,8 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import AgentCard from './AgentCard'
-import type { AgentRole, DebateMessage } from '../types'
-
-const TABS: Array<'All' | AgentRole> = ['All', 'Proponent', 'Opponent', 'Moderator', 'Judge']
+import type { DebateMessage } from '../types'
 
 interface Props {
   messages: DebateMessage[]
@@ -10,40 +7,16 @@ interface Props {
 }
 
 export default function Transcript({ messages, isRunning }: Props) {
-  const [tab, setTab] = useState<'All' | AgentRole>('All')
-  const bottomRef = useRef<HTMLDivElement>(null)
-
-  const filtered =
-    tab === 'All' ? messages : messages.filter((m) => m.agent === tab)
-
-  useEffect(() => {
-    if (isRunning) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages.length, isRunning])
+  if (!messages.length) {
+    return <p className="transcript-empty">Waiting for first message…</p>
+  }
 
   return (
-    <div className="transcript">
-      <div className="transcript-tabs">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            className={`tab ${tab === t ? 'active' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="transcript-messages">
-        {filtered.length === 0 ? (
-          <p className="transcript-empty">No messages yet.</p>
-        ) : (
-          filtered.map((msg, i) => <AgentCard key={i} message={msg} />)
-        )}
-        <div ref={bottomRef} />
-      </div>
+    <div className="transcript-list">
+      {messages.map((msg, i) => (
+        <AgentCard key={i} message={msg} />
+      ))}
+      {isRunning && <p className="transcript-waiting">Generating next turn…</p>}
     </div>
   )
 }

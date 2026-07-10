@@ -8,6 +8,14 @@ import {
 } from '../api/client'
 import type { DebateState, HealthResponse, StartDebateRequest } from '../types'
 
+function formatError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (msg.includes('rate limit') || msg.includes('429') || msg.includes('tokens/min')) {
+    return 'Groq rate limit hit. Wait about a minute, then try again — or use Demo Mode.'
+  }
+  return msg
+}
+
 export function useDebate() {
   const [health, setHealth] = useState<HealthResponse | null>(null)
   const [state, setState] = useState<DebateState | null>(null)
@@ -41,7 +49,7 @@ export function useDebate() {
     if (event.type === 'completed' || event.type === 'stopped' || event.type === 'error') {
       setIsRunning(false)
       setActiveAgent(null)
-      if (event.error) setError(event.error)
+      if (event.error) setError(formatError(event.error))
       cleanup()
     }
   }, [cleanup])
@@ -58,10 +66,10 @@ export function useDebate() {
       disconnectRef.current = connectDebateStream(
         debate_id,
         handleWsEvent,
-        (err) => { setError(err); setIsRunning(false) },
+        (err) => { setError(formatError(err)); setIsRunning(false) },
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start')
+      setError(formatError(err))
       setIsRunning(false)
     }
   }, [cleanup, handleWsEvent])

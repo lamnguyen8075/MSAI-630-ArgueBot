@@ -11,7 +11,9 @@ load_dotenv()
 
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_TIMEOUT = 120
-MAX_RETRIES = 2
+MAX_RETRIES = 5
+# Free Groq tier (~12K TPM): space requests to stay under the limit.
+DEFAULT_REQUEST_DELAY = 12
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,7 @@ class AppConfig:
     groq_model: str
     timeout_seconds: int
     max_retries: int
+    request_delay_seconds: float
     temperatures: AgentTemperatures
 
     @property
@@ -46,6 +49,9 @@ def load_config() -> AppConfig:
         groq_model=os.getenv("GROQ_MODEL", DEFAULT_MODEL),
         timeout_seconds=int(os.getenv("GROQ_TIMEOUT", str(DEFAULT_TIMEOUT))),
         max_retries=int(os.getenv("GROQ_MAX_RETRIES", str(MAX_RETRIES))),
+        request_delay_seconds=float(
+            os.getenv("GROQ_REQUEST_DELAY", str(DEFAULT_REQUEST_DELAY))
+        ),
         temperatures=AgentTemperatures(
             proponent=float(os.getenv("TEMP_PROPONENT", "0.7")),
             opponent=float(os.getenv("TEMP_OPPONENT", "0.7")),

@@ -24,6 +24,11 @@ logger = logging.getLogger("arguebot")
 
 T = TypeVar("T", bound=BaseModel)
 
+RATE_LIMIT_USER_MESSAGE = (
+    "Groq free-tier rate limit reached (~12,000 tokens/min). "
+    "Wait about a minute and try again, or use Demo Mode."
+)
+
 
 def setup_logging(level: int = logging.INFO) -> None:
     """Configure standard Python logging for ArgueBot."""
@@ -34,12 +39,40 @@ def setup_logging(level: int = logging.INFO) -> None:
     )
 
 
+def _is_rate_limit_error(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return "rate_limit" in msg or "429" in msg or "tokens per minute" in msg
+
+
+def _rate_limit_wait(exc: Exception) -> None:
+    """Pause before retrying a throttled Groq request."""
+    msg = str(exc)
+    wait = 60.0
+    if "tokens per minute" in msg.lower():
+        wait = 60.0
+    else:
+        match = re.search(r"try again in ([\d.]+)\s*(ms|s)", msg, re.I)
+        if match:
+            val = float(match.group(1))
+            unit = match.group(2).lower()
+            wait = max(val / 1000.0 if unit == "ms" else val, 5.0)
+    logger.warning("Rate limited — waiting %.0fs before retry", wait)
+    time.sleep(wait)
+
+
+def _friendly_error(exc: Exception) -> str:
+    if _is_rate_limit_error(exc):
+        return RATE_LIMIT_USER_MESSAGE
+    if isinstance(exc, NotFoundError):
+        return "Invalid model name. Check GROQ_MODEL."
+    return f"API request failed: {exc}"
+
+
 class LLMClient:
     """
     Reusable Groq client wrapper with retry, timeout, and structured parsing.
 
-    Design choice: central API wrapper separates LLM calls from orchestration.
-    All agents (Proponent, Opponent, Moderator, Judge) share this interface.
+    Spaces requests to respect free-tier TPM limits.
     """
 
     def __init__(self, config: AppConfig) -> None:
@@ -47,6 +80,7 @@ class LLMClient:
         self.model = config.groq_model
         self.timeout = config.timeout_seconds
         self.max_retries = config.max_retries
+        self.request_delay = config.request_delay_seconds
         self._client: Groq | None = None
         if config.has_api_key:
             self._client = Groq(
@@ -59,28 +93,23 @@ class LLMClient:
     def is_available(self) -> bool:
         return self._client is not None
 
-    def generate_text(
-        self,
-        *,
-        system_prompt: str,
-        user_prompt: str,
-        temperature: float = 0.7,
-    ) -> str:
-        """Generate a text response from the language model."""
+    def _throttle(self) -> None:
+        """Pause between API calls to stay within free-tier TPM limits."""
+        if self.request_delay > 0:
+            time.sleep(self.request_delay)
+
+    def _create_completion(self, **kwargs: Any) -> str:
         if not self._client:
             raise RuntimeError(
                 "Groq API key is not configured. Set GROQ_API_KEY or use Demo Mode."
             )
+        self._throttle()
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             try:
                 response = self._client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=temperature,
+                    **kwargs,
                 )
                 content = response.choices[0].message.content
                 if not content:
@@ -88,14 +117,13 @@ class LLMClient:
                 return content.strip()
             except RateLimitError as exc:
                 last_error = exc
-                logger.warning("Rate limit hit (attempt %d): %s", attempt + 1, exc)
                 if attempt < self.max_retries:
-                    time.sleep(2 ** attempt)
+                    _rate_limit_wait(exc)
             except (APITimeoutError, APIConnectionError) as exc:
                 last_error = exc
                 logger.warning("Network error (attempt %d): %s", attempt + 1, exc)
                 if attempt < self.max_retries:
-                    time.sleep(2 ** attempt)
+                    time.sleep(min(2 ** attempt, 10))
             except NotFoundError as exc:
                 raise RuntimeError(
                     f"Invalid model name '{self.model}'. Check GROQ_MODEL."
@@ -119,9 +147,23 @@ class LLMClient:
                 logger.error("API request failed: %s", exc)
                 if attempt < self.max_retries:
                     time.sleep(1)
-                else:
-                    raise RuntimeError(f"API request failed: {exc}") from exc
-        raise RuntimeError(f"API request failed after retries: {last_error}")
+        raise RuntimeError(_friendly_error(last_error or RuntimeError("Unknown error")))
+
+    def generate_text(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.7,
+    ) -> str:
+        """Generate a text response from the language model."""
+        return self._create_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=temperature,
+        )
 
     def generate_structured(
         self,
@@ -132,10 +174,6 @@ class LLMClient:
         temperature: float = 0.1,
     ) -> T:
         """Generate and parse structured JSON output using Pydantic validation."""
-        if not self._client:
-            raise RuntimeError(
-                "Groq API key is not configured. Set GROQ_API_KEY or use Demo Mode."
-            )
         schema = response_model.model_json_schema()
         schema_instruction = (
             f"\n\nRespond with valid JSON matching this schema:\n"
@@ -144,18 +182,17 @@ class LLMClient:
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             try:
-                response = self._client.chat.completions.create(
-                    model=self.model,
+                raw = self._create_completion(
                     messages=[
-                        {"role": "system", "content": system_prompt + schema_instruction},
+                        {
+                            "role": "system",
+                            "content": system_prompt + schema_instruction,
+                        },
                         {"role": "user", "content": user_prompt},
                     ],
                     temperature=temperature,
                     response_format={"type": "json_object"},
                 )
-                raw = response.choices[0].message.content
-                if not raw:
-                    raise ValueError("Empty structured response from model.")
                 parsed = _parse_json_response(raw)
                 return response_model.model_validate(parsed)
             except ValidationError as exc:
@@ -169,40 +206,13 @@ class LLMClient:
                     raise RuntimeError(
                         f"Structured output malformed after retries: {exc}"
                     ) from exc
-            except RateLimitError as exc:
-                last_error = exc
-                logger.warning("Rate limit hit (attempt %d): %s", attempt + 1, exc)
-                if attempt < self.max_retries:
-                    time.sleep(2 ** attempt)
-            except (APITimeoutError, APIConnectionError) as exc:
-                last_error = exc
-                logger.warning("Network error (attempt %d): %s", attempt + 1, exc)
-                if attempt < self.max_retries:
-                    time.sleep(2 ** attempt)
-            except NotFoundError as exc:
-                raise RuntimeError(
-                    f"Invalid model name '{self.model}'. Check GROQ_MODEL."
-                ) from exc
-            except BadRequestError as exc:
-                error_msg = str(exc).lower()
-                if "model" in error_msg and (
-                    "not found" in error_msg
-                    or "invalid" in error_msg
-                    or "does not exist" in error_msg
-                ):
-                    raise RuntimeError(
-                        f"Invalid model name '{self.model}'. Check GROQ_MODEL."
-                    ) from exc
-                last_error = exc
-                logger.error("Structured generation bad request: %s", exc)
-                if attempt >= self.max_retries:
-                    raise RuntimeError(f"Structured generation failed: {exc}") from exc
+            except RuntimeError:
+                raise
             except Exception as exc:
                 last_error = exc
-                logger.error("Structured generation failed: %s", exc)
                 if attempt >= self.max_retries:
-                    raise RuntimeError(f"Structured generation failed: {exc}") from exc
-        raise RuntimeError(f"Structured generation failed: {last_error}")
+                    raise RuntimeError(_friendly_error(exc)) from exc
+        raise RuntimeError(_friendly_error(last_error or RuntimeError("Unknown error")))
 
 
 def _parse_json_response(raw: str) -> dict[str, Any]:

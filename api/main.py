@@ -32,8 +32,8 @@ class StartDebateRequest(BaseModel):
     topic: str = Field(..., min_length=10)
     background_context: str = ""
     style: DebateStyle = DebateStyle.ACADEMIC
-    configured_rounds: int = Field(default=6, ge=6, le=10)
-    response_length: ResponseLength = ResponseLength.STANDARD
+    configured_rounds: int = Field(default=6, ge=6, le=6)
+    response_length: ResponseLength = ResponseLength.CONCISE
     stress_test: bool = False
 
 

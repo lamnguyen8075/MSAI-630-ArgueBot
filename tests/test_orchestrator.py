@@ -29,6 +29,7 @@ def mock_config():
         groq_model="llama-3.3-70b-versatile",
         timeout_seconds=30,
         max_retries=1,
+        request_delay_seconds=0,
         temperatures=__import__("src.config", fromlist=["AgentTemperatures"]).AgentTemperatures(),
     )
 
@@ -67,6 +68,7 @@ def test_empty_topic_rejected():
         groq_model="llama-3.3-70b-versatile",
         timeout_seconds=30,
         max_retries=1,
+        request_delay_seconds=0,
         temperatures=__import__("src.config", fromlist=["AgentTemperatures"]).AgentTemperatures(),
     ))
     with pytest.raises(ValueError, match="at least 10 characters"):

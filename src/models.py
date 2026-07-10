@@ -61,7 +61,7 @@ class DebateConfig(BaseModel):
     background_context: str = ""
     style: DebateStyle = DebateStyle.ACADEMIC
     configured_rounds: int = Field(default=6, ge=6, le=10)
-    response_length: ResponseLength = ResponseLength.STANDARD
+    response_length: ResponseLength = ResponseLength.CONCISE
     stress_test: bool = False
     demo_mode: bool = False
 
@@ -178,7 +178,7 @@ class DebateState(BaseModel):
     background_context: str = ""
     style: DebateStyle = DebateStyle.ACADEMIC
     configured_rounds: int = 6
-    response_length: ResponseLength = ResponseLength.STANDARD
+    response_length: ResponseLength = ResponseLength.CONCISE
     current_round: int = 0
     status: DebateStatus = DebateStatus.PENDING
     messages: list[DebateMessage] = Field(default_factory=list)

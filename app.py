@@ -212,56 +212,32 @@ def main() -> None:
     init_session_state()
     config = load_config()
 
-    st.title("ArgueBot: Multi-Agent Debate System")
-    st.markdown(
-        "A four-agent autonomous debate system featuring a **Proponent**, **Opponent**, "
-        "**Moderator**, and **Scoring Judge**. Enter any motion and watch structured "
-        "multi-round debate unfold with live scoring."
-    )
+    st.title("ArgueBot")
+    st.caption("Four AI agents debate your motion. Tuned for Groq free tier (~12K tokens/min).")
 
-    # Sidebar configuration
     with st.sidebar:
-        st.header("Configuration")
         demo_mode = st.checkbox(
-            "Demo Mode (prerecorded)",
+            "Demo Mode",
             value=not config.has_api_key,
-            help="Load a saved example debate. No API key required. Clearly simulated data.",
+            help="Prerecorded sample — no API calls.",
         )
         if config.has_api_key:
-            st.success(f"Model: `{config.groq_model}`")
+            st.success(f"`{config.groq_model}`")
         else:
-            st.warning("No API key detected. Enable Demo Mode or set GROQ_API_KEY.")
+            st.warning("Set GROQ_API_KEY or use Demo Mode.")
+
+        st.info(
+            "Live debates use 6 rounds, concise responses, and ~12s between API calls (~5 min). "
+            "If you hit rate limits, wait a minute or use Demo Mode."
+        )
 
         motion = st.text_input(
-            "Debate Motion",
+            "Motion",
             placeholder="Universities should permit students to use generative AI for graded assignments.",
         )
-        background = st.text_area("Background Context (optional)", height=80)
-        style = st.selectbox(
-            "Debate Style",
-            [s.value for s in DebateStyle],
-            index=0,
-        )
-        num_rounds = st.slider("Number of Rounds", min_value=6, max_value=10, value=6)
-        response_length = st.selectbox(
-            "Response Length",
-            [r.value for r in ResponseLength],
-            index=1,
-        )
-        stress_test = st.checkbox(
-            "Stress Test Role Consistency",
-            value=False,
-            help="Inject adversarial instructions to test persona-collapse prevention. Off by default.",
-        )
 
-        col_start, col_stop = st.columns(2)
-        with col_start:
-            start_clicked = st.button("▶ Start Debate", type="primary", use_container_width=True)
-        with col_stop:
-            stop_clicked = st.button("⏹ Reset", use_container_width=True)
-
-    with st.expander("📜 Debate Rules"):
-        st.markdown(DEBATE_RULES)
+        start_clicked = st.button("Start", type="primary", use_container_width=True)
+        stop_clicked = st.button("Reset", use_container_width=True)
 
     if stop_clicked:
         st.session_state.debate_state = None
@@ -288,11 +264,8 @@ def main() -> None:
                 try:
                     debate_config = DebateConfig(
                         topic=motion,
-                        background_context=background,
-                        style=DebateStyle(style),
-                        configured_rounds=num_rounds,
-                        response_length=ResponseLength(response_length),
-                        stress_test=stress_test,
+                        configured_rounds=6,
+                        response_length=ResponseLength.CONCISE,
                     )
                     orchestrator = DebateOrchestrator(config)
                     st.session_state.debate_running = True
@@ -339,26 +312,10 @@ def main() -> None:
 
         render_scorecard(state)
 
-        st.subheader("Debate Transcript")
-        tabs = st.tabs(["All Messages", "Proponent", "Opponent", "Moderator", "Judge"])
-        messages = state.get("messages", [])
-        with tabs[0]:
-            render_debate_messages(state)
-        for i, agent_name in enumerate(["Proponent", "Opponent", "Moderator", "Judge"], 1):
-            with tabs[i]:
-                agent_msgs = [
-                    m for m in messages
-                    if (m.get("agent") if isinstance(m, dict) else m.agent.value if hasattr(m, "agent") else "") == agent_name
-                    or (hasattr(m, "agent") and m.agent.value == agent_name)
-                ]
-                if not agent_msgs:
-                    st.info(f"No {agent_name} messages yet.")
-                for msg in agent_msgs:
-                    m = msg if isinstance(msg, dict) else msg.model_dump()
-                    render_agent_message(m)
+        st.subheader("Transcript")
+        render_debate_messages(state)
 
         render_final_verdict(state)
-        render_failure_analysis(state)
 
         # Downloads
         st.subheader("📥 Export")

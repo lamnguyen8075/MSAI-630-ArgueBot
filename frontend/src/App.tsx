@@ -1,41 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import './components.css'
-import Sidebar from './components/Sidebar'
-import StatusBar from './components/StatusBar'
-import RoundStepper from './components/RoundStepper'
-import ScorePanel from './components/ScorePanel'
 import Transcript from './components/Transcript'
+import ScorePanel from './components/ScorePanel'
 import VerdictPanel from './components/VerdictPanel'
-import FailureAnalysis from './components/FailureAnalysis'
 import ExportButtons from './components/ExportButtons'
-import RulesPanel from './components/RulesPanel'
 import { useDebate } from './hooks/useDebate'
 
-export default function App() {
-  const {
-    health,
-    state,
-    isRunning,
-    isDemo,
-    error,
-    activeAgent,
-    runLive,
-    runDemo,
-    reset,
-    stop,
-  } = useDebate()
+const DEFAULT_MOTION =
+  'Universities should permit students to use generative AI tools for graded assignments.'
 
-  const [motion, setMotion] = useState(
-    'Universities should permit students to use generative AI tools for graded assignments.',
-  )
-  const [background, setBackground] = useState('')
-  const [style, setStyle] = useState('Academic')
-  const [rounds, setRounds] = useState(6)
-  const [responseLength, setResponseLength] = useState('Standard')
-  const [stressTest, setStressTest] = useState(false)
-  const [demoMode, setDemoMode] = useState(false)
-  const [presentationMode, setPresentationMode] = useState(false)
+export default function App() {
+  const { health, state, isRunning, isDemo, error, activeAgent, runLive, runDemo, reset } =
+    useDebate()
+
+  const [motion, setMotion] = useState(DEFAULT_MOTION)
+  const [demoMode, setDemoMode] = useState(true)
+
+  useEffect(() => {
+    if (health) setDemoMode(!health.has_api_key)
+  }, [health])
 
   const handleStart = () => {
     if (demoMode) {
@@ -45,115 +29,110 @@ export default function App() {
     if (motion.trim().length < 10) return
     runLive({
       topic: motion.trim(),
-      background_context: background,
-      style,
-      configured_rounds: rounds,
-      response_length: responseLength,
-      stress_test: stressTest,
+      background_context: '',
+      style: 'Academic',
+      configured_rounds: 6,
+      response_length: 'Concise',
+      stress_test: false,
     })
   }
 
   const lastMsg = state?.messages[state.messages.length - 1]
-  const roundName = lastMsg?.round_name ?? ''
+  const statusLabel = isRunning
+    ? `Round ${state?.current_round ?? 0}/6 · ${activeAgent ?? 'Working'}…`
+    : state?.status === 'completed'
+      ? 'Complete'
+      : state
+        ? state.status
+        : 'Ready'
 
   return (
-    <div className={`app-layout ${presentationMode ? 'presentation' : ''}`}>
-      {!presentationMode && (
-        <Sidebar
-          health={health}
-          motion={motion}
-          background={background}
-          style={style}
-          rounds={rounds}
-          responseLength={responseLength}
-          stressTest={stressTest}
-          demoMode={demoMode}
-          presentationMode={presentationMode}
-          isRunning={isRunning}
-          onMotionChange={setMotion}
-          onBackgroundChange={setBackground}
-          onStyleChange={setStyle}
-          onRoundsChange={setRounds}
-          onResponseLengthChange={setResponseLength}
-          onStressTestChange={setStressTest}
-          onDemoModeChange={setDemoMode}
-          onPresentationModeChange={setPresentationMode}
-          onStart={handleStart}
-          onStop={stop}
-          onReset={reset}
+    <div className="app">
+      <header className="app-header">
+        <h1>ArgueBot</h1>
+        <p>Four AI agents debate your motion. Optimized for Groq free tier.</p>
+      </header>
+
+      <section className="controls">
+        <label htmlFor="motion">Motion</label>
+        <textarea
+          id="motion"
+          rows={2}
+          value={motion}
+          onChange={(e) => setMotion(e.target.value)}
+          disabled={isRunning}
+          placeholder={DEFAULT_MOTION}
+        />
+
+        <div className="controls-row">
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={demoMode}
+              onChange={(e) => setDemoMode(e.target.checked)}
+              disabled={isRunning}
+            />
+            Demo Mode (no API calls)
+          </label>
+          <div className="btn-group">
+            <button className="btn-primary" onClick={handleStart} disabled={isRunning}>
+              {isRunning ? 'Running…' : 'Start'}
+            </button>
+            <button className="btn-secondary" onClick={reset} disabled={isRunning}>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <p className="tier-note">
+          Free Groq allows ~12K tokens/min. Live debates use short responses, 6 rounds,
+          and ~12s between API calls (~5 min total). Hit rate limits? Wait a minute or use Demo Mode.
+        </p>
+
+        {health && (
+          <p className={`api-line ${health.has_api_key ? 'ok' : 'warn'}`}>
+            {health.has_api_key
+              ? `Connected · ${health.model}`
+              : 'No API key — enable Demo Mode'}
+          </p>
+        )}
+      </section>
+
+      {error && <div className="error-banner">{error}</div>}
+      {isDemo && state && <div className="info-banner">Demo Mode — prerecorded sample debate.</div>}
+
+      {state && (
+        <section className="status-line">
+          <span className={`status-pill ${isRunning ? 'live' : ''}`}>{statusLabel}</span>
+          {lastMsg && isRunning && (
+            <span className="status-detail">{lastMsg.round_name}</span>
+          )}
+        </section>
+      )}
+
+      {state && state.round_scores.length > 0 && (
+        <ScorePanel
+          roundScores={state.round_scores}
+          cumulative={state.cumulative_scores}
         />
       )}
 
-      <main className="main-content">
-        <header className="page-header">
-          <h1>ArgueBot: Multi-Agent Debate System</h1>
-          <p>
-            Four autonomous agents — Proponent, Opponent, Moderator, and Judge —
-            conduct structured debates with live scoring and a final verdict.
-          </p>
-        </header>
-
-        {presentationMode && (
-          <button className="btn-exit-presentation" onClick={() => setPresentationMode(false)}>
-            Exit Presentation Mode
-          </button>
-        )}
-
-        {error && <div className="error-banner">{error}</div>}
-        {isDemo && state && (
-          <div className="info-banner">
-            Demo Mode — This is prerecorded example data, not a live API debate.
-          </div>
-        )}
-
-        {state ? (
-          <>
-            <StatusBar
-              status={state.status}
-              currentRound={state.current_round}
-              configuredRounds={state.configured_rounds}
-              roundName={roundName}
-              activeAgent={activeAgent}
-              isRunning={isRunning}
-              isDemo={isDemo}
-              winner={state.final_verdict?.winner}
-            />
-
-            <RoundStepper
-              currentRound={state.current_round}
-              configuredRounds={state.configured_rounds}
-            />
-
-            <ScorePanel
-              roundScores={state.round_scores}
-              cumulative={state.cumulative_scores}
-            />
-
-            <h3 className="section-title">Debate Transcript</h3>
-            <Transcript messages={state.messages} isRunning={isRunning} />
-
-            {state.final_verdict && <VerdictPanel verdict={state.final_verdict} />}
-            <FailureAnalysis violations={state.violations} />
-
-            {state.status === 'completed' && (
-              <>
-                <h3 className="section-title">Export</h3>
-                <ExportButtons debateId={state.debate_id} />
-              </>
-            )}
-          </>
-        ) : (
-          <div className="empty-state">
-            <h2>Ready to Debate</h2>
-            <p>
-              Enter a motion in the sidebar and click Start Debate, or enable Demo Mode
-              to load a sample debate instantly.
-            </p>
-          </div>
-        )}
-
-        <RulesPanel />
-      </main>
+      {state ? (
+        <>
+          <h2 className="section-heading">Transcript</h2>
+          <Transcript messages={state.messages} isRunning={isRunning} />
+          {state.final_verdict && <VerdictPanel verdict={state.final_verdict} />}
+          {state.status === 'completed' && (
+            <div className="export-row">
+              <ExportButtons debateId={state.debate_id} />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="empty">
+          <p>Enter a motion and press Start, or use Demo Mode to preview a sample debate.</p>
+        </div>
+      )}
     </div>
   )
 }

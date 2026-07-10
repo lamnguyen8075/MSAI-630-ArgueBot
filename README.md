@@ -87,6 +87,8 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 `GROQ_MODEL` defaults to `llama-3.3-70b-versatile` if omitted. See the [Groq model list](https://console.groq.com/docs/models) for other options.
 
+**Free tier note:** Groq's free tier limits you to ~12,000 tokens per minute. ArgueBot spaces API calls 12 seconds apart and uses concise responses to stay within that limit. A full 6-round debate takes about 5 minutes. Set `GROQ_REQUEST_DELAY=12` in `.env` (default). If you hit rate limits, wait a minute or use Demo Mode.
+
 ## How to Run
 
 ### React UI (recommended)
