@@ -1,0 +1,191 @@
+{
+  "_note": "EXAMPLE DATA — This is prerecorded sample data for Demo Mode, not a live debate.",
+  "debate_id": "demo-001-universities-ai",
+  "topic": "Universities should permit students to use generative AI tools for graded assignments.",
+  "background_context": "Focus on undergraduate education in the 2024-2026 academic period.",
+  "style": "Academic",
+  "configured_rounds": 6,
+  "response_length": "Standard",
+  "current_round": 6,
+  "status": "completed",
+  "stress_test": false,
+  "created_at": "2026-03-15T14:00:00+00:00",
+  "completed_at": "2026-03-15T14:45:00+00:00",
+  "messages": [
+    {
+      "round_number": 0,
+      "round_name": "Introduction",
+      "agent": "Moderator",
+      "timestamp": "2026-03-15T14:00:05+00:00",
+      "content": "Welcome to today's debate. The motion before us is: 'Universities should permit students to use generative AI tools for graded assignments.'\n\nKey terms: 'Generative AI tools' refers to systems like ChatGPT, Claude, or similar large language models. 'Permit' means allowing use under defined conditions, not unrestricted access. 'Graded assignments' includes essays, problem sets, and projects that contribute to course grades.\n\nFormat: Six structured rounds with opening statements, evidence, rebuttals, cross-examination, final rebuttals, and closing statements. The Judge will score at each checkpoint using a 100-point weighted rubric.\n\nModerator neutrality maintained.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 1,
+      "round_name": "Opening Statements",
+      "agent": "Proponent",
+      "timestamp": "2026-03-15T14:02:00+00:00",
+      "content": "Universities should permit students to use generative AI for graded assignments because AI literacy is now a core professional competency. Just as calculators became standard in mathematics education, AI tools represent the next evolution in how knowledge work is performed.\n\nPermitting structured AI use teaches students to prompt effectively, evaluate outputs critically, and integrate AI as a thinking partner rather than a replacement for thought. Institutions that ban AI outright create a skills gap between graduates and industry expectations.\n\nA permission framework with disclosure requirements and process documentation ensures academic integrity while preparing students for workplaces where AI assistance is already normative.\n\nCore position maintained: FOR the motion.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 1,
+      "round_name": "Opening Statements",
+      "agent": "Opponent",
+      "timestamp": "2026-03-15T14:04:00+00:00",
+      "content": "Universities should not permit generative AI for graded assignments because it fundamentally undermines the assessment of student learning. Graded work exists to measure whether students have acquired specific knowledge and skills; AI-generated content obscures that measurement entirely.\n\nThe asymmetry of access creates inequity: students with premium AI subscriptions produce polished work that may not reflect their actual capabilities. Furthermore, over-reliance on AI atrophies foundational skills in writing, analysis, and independent reasoning that universities exist to develop.\n\nRather than permission, universities should invest in AI-resistant assessment design and clear prohibition with education about appropriate use outside graded contexts.\n\nCore position maintained: AGAINST the motion.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 1,
+      "round_name": "Opening Statements",
+      "agent": "Judge",
+      "timestamp": "2026-03-15T14:05:00+00:00",
+      "content": "Round 1 Scores — Proponent: 72.5/100, Opponent: 74.0/100. Leader: Opponent. Both sides established clear frameworks. The Proponent effectively linked AI literacy to professional preparedness but relied on analogy rather than evidence. The Opponent raised strong concerns about assessment validity and skill atrophy with concrete mechanisms.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 2,
+      "round_name": "Evidence and Main Case",
+      "agent": "Proponent",
+      "timestamp": "2026-03-15T14:08:00+00:00",
+      "content": "Evidence supports permitting AI under structured conditions. Industry surveys consistently report that a majority of knowledge workers now use AI tools weekly, suggesting universities must prepare students for this reality rather than pretend it does not exist.\n\nPilot programs at several institutions allowing disclosed AI use report that students who document their AI interaction demonstrate stronger metacognitive skills — they articulate what they asked, what they changed, and why. This process documentation transforms AI from a shortcut into a learning artifact.\n\nThe alternative — prohibition — has proven difficult to enforce, with detection tools producing false positives and driving use underground where no pedagogical oversight occurs.\n\nCore position maintained: FOR the motion.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 2,
+      "round_name": "Evidence and Main Case",
+      "agent": "Opponent",
+      "timestamp": "2026-03-15T14:11:00+00:00",
+      "content": "The evidence for prohibition is stronger when examined carefully. Studies on cognitive offloading suggest that when external tools handle generative tasks, students retain less and transfer skills poorly to unaided contexts — a direct threat to learning outcomes universities are accredited to deliver.\n\nDetection difficulty is not an argument for permission; it is an argument for redesigning assessments toward in-class work, oral defense, and process portfolios that AI cannot substitute for. The cost of redesign is a one-time institutional investment; the cost of graduated students who cannot think independently is permanent.\n\nPilot program claims about metacognition are promising but ungeneralized and self-selected — students motivated to document AI use may already be high performers.\n\nCore position maintained: AGAINST the motion.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 2,
+      "round_name": "Evidence and Main Case",
+      "agent": "Judge",
+      "timestamp": "2026-03-15T14:12:00+00:00",
+      "content": "Round 2 Scores — Proponent: 76.0/100, Opponent: 78.5/100. Leader: Opponent. The Opponent strengthened their case with cognitive offloading concerns and a concrete alternative (assessment redesign). The Proponent's industry survey reference lacked specificity but the process documentation argument was novel and well-developed.",
+      "role_check_passed": true,
+      "is_retry": false
+    },
+    {
+      "round_number": 6,
+      "round_name": "Closing Statements and Verdict",
+      "agent": "Judge",
+      "timestamp": "2026-03-15T14:44:00+00:00",
+      "content": "FINAL VERDICT\n\nWinner: Opponent\nProponent Final Score: 75.8/100\nOpponent Final Score: 78.2/100\nConfidence: 72%\n\nThe Opponent prevailed by consistently grounding arguments in assessment validity and learning science, while offering a constructive alternative path. The Proponent made a compelling case for AI literacy but did not adequately address the measurement problem at the core of graded assessment.",
+      "role_check_passed": true,
+      "is_retry": false
+    }
+  ],
+  "round_summaries": [
+    {
+      "round_number": 0,
+      "round_name": "Introduction",
+      "summary": "Moderator introduced motion, defined terms, and explained format.",
+      "proponent_key_claims": [],
+      "opponent_key_claims": [],
+      "unanswered_questions": []
+    },
+    {
+      "round_number": 1,
+      "round_name": "Opening Statements",
+      "summary": "Proponent argued AI literacy is essential; Opponent argued assessment validity is undermined.",
+      "proponent_key_claims": ["AI literacy is a core professional competency"],
+      "opponent_key_claims": ["AI undermines assessment of student learning"],
+      "unanswered_questions": []
+    }
+  ],
+  "round_scores": [
+    {
+      "round_number": 1,
+      "proponent": {
+        "logical_reasoning": 7.5,
+        "evidence_support": 6.5,
+        "relevance_responsiveness": 8.0,
+        "rebuttal_quality": 6.0,
+        "consistency_role_adherence": 9.0,
+        "clarity_organization": 8.0,
+        "weighted_total": 72.5,
+        "strengths": ["Clear framework linking AI to professional skills", "Good structural organization"],
+        "weaknesses": ["Relied on calculator analogy without empirical support", "Limited engagement with assessment concerns"]
+      },
+      "opponent": {
+        "logical_reasoning": 8.0,
+        "evidence_support": 7.0,
+        "relevance_responsiveness": 8.0,
+        "rebuttal_quality": 6.5,
+        "consistency_role_adherence": 9.0,
+        "clarity_organization": 8.0,
+        "weighted_total": 74.0,
+        "strengths": ["Strong assessment validity argument", "Raised access inequity concern"],
+        "weaknesses": ["Did not address industry reality of AI adoption", "Prohibition enforcement challenges underdeveloped"]
+      },
+      "round_leader": "Opponent",
+      "judge_commentary": "Both sides established clear frameworks. Opponent edged ahead on grounding arguments in core purpose of assessment.",
+      "confidence": 0.65
+    },
+    {
+      "round_number": 2,
+      "proponent": {
+        "logical_reasoning": 7.5,
+        "evidence_support": 7.0,
+        "relevance_responsiveness": 8.0,
+        "rebuttal_quality": 7.5,
+        "consistency_role_adherence": 9.0,
+        "clarity_organization": 7.5,
+        "weighted_total": 76.0,
+        "strengths": ["Process documentation argument", "Enforcement practicality point"],
+        "weaknesses": ["Vague industry survey reference", "Pilot program evidence thin"]
+      },
+      "opponent": {
+        "logical_reasoning": 8.5,
+        "evidence_support": 7.5,
+        "relevance_responsiveness": 8.5,
+        "rebuttal_quality": 8.0,
+        "consistency_role_adherence": 9.0,
+        "clarity_organization": 8.0,
+        "weighted_total": 78.5,
+        "strengths": ["Cognitive offloading concern well-developed", "Constructive alternative offered"],
+        "weaknesses": ["Assessment redesign cost not quantified", "Dismissed pilots too quickly"]
+      },
+      "round_leader": "Opponent",
+      "judge_commentary": "Opponent strengthened with learning science and alternative assessment design.",
+      "confidence": 0.70
+    }
+  ],
+  "cumulative_scores": {
+    "proponent": 75.8,
+    "opponent": 78.2,
+    "rounds_scored": 5
+  },
+  "violations": [],
+  "final_verdict": {
+    "winner": "Opponent",
+    "proponent_final_score": 75.8,
+    "opponent_final_score": 78.2,
+    "decision_summary": "The Opponent prevailed by consistently grounding arguments in assessment validity and learning science, while offering a constructive alternative path. The Proponent made a compelling case for AI literacy but did not adequately address the measurement problem at the core of graded assessment.",
+    "decisive_factors": [
+      "Assessment validity concerns were never fully resolved by the Proponent",
+      "Opponent offered concrete alternative (assessment redesign) rather than mere prohibition",
+      "Cognitive offloading argument remained largely unchallenged"
+    ],
+    "proponent_best_argument": "Process documentation transforms AI from a shortcut into a learning artifact, teaching metacognitive skills.",
+    "opponent_best_argument": "Graded work measures learning; AI-generated content obscures that measurement, threatening the core purpose of university assessment.",
+    "major_limitations": [
+      "Neither side had access to rigorous longitudinal studies on AI in graded contexts",
+      "Judge cannot verify factual claims about industry surveys or pilot programs",
+      "Shared model bias may favor structurally similar argument patterns",
+      "Demo data truncated for presentation brevity"
+    ],
+    "role_violations": [],
+    "confidence": 0.72
+  }
+}
