@@ -32,6 +32,7 @@ RATE_LIMIT_USER_MESSAGE = (
 
 # Serialize all Groq calls across users/debates on one API key.
 _groq_global_lock = threading.Lock()
+_last_groq_429_at: float = 0.0
 
 
 def setup_logging(level: int = logging.INFO) -> None:
@@ -50,18 +51,29 @@ def _is_rate_limit_error(exc: Exception) -> bool:
 
 def _rate_limit_wait(exc: Exception) -> None:
     """Pause before retrying a throttled Groq request."""
+    global _last_groq_429_at
+    _last_groq_429_at = time.monotonic()
     msg = str(exc)
-    wait = 60.0
-    if "tokens per minute" in msg.lower():
-        wait = 60.0
-    else:
+    wait = 65.0
+    if "tokens per minute" not in msg.lower():
         match = re.search(r"try again in ([\d.]+)\s*(ms|s)", msg, re.I)
         if match:
             val = float(match.group(1))
             unit = match.group(2).lower()
-            wait = max(val / 1000.0 if unit == "ms" else val, 5.0)
+            wait = max(val / 1000.0 if unit == "ms" else val, 5.0) + 5.0
     logger.warning("Rate limited — waiting %.0fs before retry", wait)
     time.sleep(wait)
+
+
+def _cooldown_if_recently_limited() -> None:
+    """Wait out Groq's per-minute token window after a recent 429."""
+    if _last_groq_429_at <= 0:
+        return
+    elapsed = time.monotonic() - _last_groq_429_at
+    if elapsed < 70:
+        wait = 70 - elapsed
+        logger.info("Cooling down %.0fs after recent Groq rate limit", wait)
+        time.sleep(wait)
 
 
 def _friendly_error(exc: Exception) -> str:
@@ -108,6 +120,7 @@ class LLMClient:
                 "Groq API key is not configured. Set GROQ_API_KEY or use Demo Mode."
             )
         with _groq_global_lock:
+            _cooldown_if_recently_limited()
             self._throttle()
             last_error: Exception | None = None
             for attempt in range(self.max_retries + 1):
