@@ -63,8 +63,13 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <Logo size={36} isActive={isRunning} />
-          <span className="brand-name">ArgueBot</span>
+          <Logo size={28} isActive={isRunning} />
+          <span className="brand-name" aria-label="ArgueBot">
+            <span className="brand-name-inner">
+              <span className="brand-argue">Argue</span>
+              <span className="brand-bot">Bot</span>
+            </span>
+          </span>
         </div>
 
         {cumulative && cumulative.rounds_scored > 0 && (
@@ -83,7 +88,7 @@ export default function App() {
       <main className="chat-main">
         {!showChat && (
           <div className="empty-hero">
-            <Logo size={72} isActive={isRunning} />
+            <Logo size={58} isActive={isRunning} />
             <h1>What should they debate?</h1>
             <p>Four AI agents argue your motion — turn by turn, like a live panel.</p>
             <div className="hero-seeds">

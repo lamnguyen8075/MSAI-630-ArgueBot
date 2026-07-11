@@ -5,20 +5,16 @@ interface Props {
   isActive?: boolean
 }
 
-const INK = '#1a1a1a'
-const PANEL = '#b0b0b0'
+const INK = '#0f172a'
+const SHADE = '#e0e7ff'
+const SHADE_MID = '#c7d2fe'
 
 /**
- * Classic clip-art hot air balloon — bulbous teardrop envelope, gores,
- * trapezoid skirt, vertical ropes, wicker basket.
+ * Vintage scales of justice — inspired by hand-drawn reference.
+ * Beam rocks gently while a debate is in progress.
  */
 export default function Logo({ size = 36, isActive = false }: Props) {
   const uid = useId().replace(/:/g, '')
-
-  // Bulbous top, narrow neck — matches reference teardrop silhouettes
-  const envelope =
-    'M20 2 C9 2 3.5 10 4 17 C4.5 22.5 8.5 26.5 13 27.2' +
-    ' L27 27.2 C31.5 26.5 35.5 22.5 36 17 C36.5 10 31 2 20 2 Z'
 
   return (
     <div
@@ -28,71 +24,100 @@ export default function Logo({ size = 36, isActive = false }: Props) {
     >
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <clipPath id={`${uid}-clip`}>
-            <path d={envelope} />
+          <clipPath id={`${uid}-lpan`}>
+            <path d="M4 19 Q8 23 12 19 Q8 25 4 19 Z" />
           </clipPath>
-          <clipPath id={`${uid}-basket`}>
-            <rect x="10.6" y="32.1" width="18.8" height="5.3" rx="0.3" />
+          <clipPath id={`${uid}-rpan`}>
+            <path d="M28 19 Q32 23 36 19 Q32 25 28 19 Z" />
           </clipPath>
         </defs>
 
         <g className="logo-rig">
-          <g className="logo-balloon">
+          {/* Stand — finial, pillar, tiered base */}
+          <g className="logo-stand">
             <path
-              d={envelope}
-              fill="white"
+              d="M20 1.5 L21.3 4.8 L20 6.2 L18.7 4.8 Z"
+              fill={SHADE}
               stroke={INK}
-              strokeWidth="1.4"
+              strokeWidth="1.1"
               strokeLinejoin="round"
             />
 
-            <g className="logo-panels" clipPath={`url(#${uid}-clip)`} stroke={PANEL} strokeWidth="0.7">
-              <path d="M20 2 Q12 14 13 27.2" />
-              <path d="M20 2 Q15.5 14 15.5 27.2" />
-              <path d="M20 2 Q17.5 14 17.5 27.2" />
-              <path d="M20 2 L20 27.2" />
-              <path d="M20 2 Q22.5 14 22.5 27.2" />
-              <path d="M20 2 Q24.5 14 24.5 27.2" />
-              <path d="M20 2 Q28 14 27 27.2" />
-            </g>
-
             <path
-              d="M13 27.2 L27 27.2 L25.2 29 L14.8 29 Z"
-              fill="white"
-              stroke={INK}
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-            />
-          </g>
-
-          <g className="logo-basket-rig">
-            <line className="logo-rope" x1="14.8" y1="29" x2="11" y2="31.5" stroke={INK} strokeWidth="0.85" />
-            <line className="logo-rope" x1="17" y1="29" x2="14.5" y2="31.5" stroke={INK} strokeWidth="0.85" />
-            <line className="logo-rope" x1="23" y1="29" x2="25.5" y2="31.5" stroke={INK} strokeWidth="0.85" />
-            <line className="logo-rope" x1="25.2" y1="29" x2="29" y2="31.5" stroke={INK} strokeWidth="0.85" />
-
-            <rect
-              className="logo-basket"
-              x="10"
-              y="31.5"
-              width="20"
-              height="6.5"
-              rx="0.6"
-              fill="white"
+              d="M18.6 6.2 C17.2 6.2 16.6 11.5 17.4 17 C17.8 20 18.4 25.5 18.5 28.2
+                 L21.5 28.2 C21.6 25.5 22.2 20 22.6 17 C23.4 11.5 22.8 6.2 21.4 6.2 Z"
+              fill={SHADE}
               stroke={INK}
               strokeWidth="1.25"
+              strokeLinejoin="round"
             />
 
-            <g className="logo-wicker" clipPath={`url(#${uid}-basket)`} stroke={INK} strokeWidth="0.45" opacity="0.5">
-              <line x1="11" y1="32.5" x2="29" y2="32.5" />
-              <line x1="11" y1="34" x2="29" y2="34" />
-              <line x1="11" y1="35.5" x2="29" y2="35.5" />
-              <line x1="11" y1="37" x2="29" y2="37" />
-              <line x1="13" y1="31.5" x2="13" y2="38" />
-              <line x1="16" y1="31.5" x2="16" y2="38" />
-              <line x1="20" y1="31.5" x2="20" y2="38" />
-              <line x1="24" y1="31.5" x2="24" y2="38" />
-              <line x1="27" y1="31.5" x2="27" y2="38" />
+            <ellipse cx="20" cy="33" rx="4.2" ry="1.1" fill={SHADE_MID} stroke={INK} strokeWidth="1" />
+            <ellipse cx="20" cy="35.2" rx="6.2" ry="1.5" fill={SHADE_MID} stroke={INK} strokeWidth="1" />
+            <ellipse cx="20" cy="37.5" rx="8.5" ry="1.8" fill={SHADE} stroke={INK} strokeWidth="1.1" />
+          </g>
+
+          {/* Beam + pans — rocks as arguments are weighed */}
+          <g className="logo-beam-rig">
+            <g className="logo-beam">
+              <path
+                d="M6.5 10.2 C5 9.5 4.2 8.8 5.5 8.2 C6.2 7.9 6.8 8.1 7.2 8.6
+                   M7.2 8.6 L32.8 8.6
+                   M32.8 8.6 C33.2 8.1 33.8 7.9 34.5 8.2 C35.8 8.8 35 9.5 33.5 10.2"
+                stroke={INK}
+                strokeWidth="1.35"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M5.5 8.2 C5 7.5 5.2 6.8 6 6.9 C6.5 7 6.7 7.5 6.5 8.2
+                   M34.5 8.2 C34.3 7.5 34.5 7 35 6.9 C35.8 6.8 36 7.5 35.5 8.2"
+                stroke={INK}
+                strokeWidth="1"
+                strokeLinecap="round"
+              />
+              <line x1="7.2" y1="8.6" x2="7.2" y2="10.5" stroke={INK} strokeWidth="1.2" />
+              <line x1="32.8" y1="8.6" x2="32.8" y2="10.5" stroke={INK} strokeWidth="1.2" />
+            </g>
+
+            <g className="logo-pan logo-pan-left">
+              <line x1="6.5" y1="10.2" x2="4.5" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <line x1="8" y1="10.2" x2="8" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <line x1="9.5" y1="10.2" x2="11.5" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <path
+                d="M4 18.8 Q8 22.2 12 18.8 Q8 24.2 4 18.8 Z"
+                fill={SHADE}
+                stroke={INK}
+                strokeWidth="1.15"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M4.8 19.5 Q8 21.5 11.2 19.5"
+                stroke={INK}
+                strokeWidth="0.5"
+                opacity="0.45"
+                clipPath={`url(#${uid}-lpan)`}
+              />
+            </g>
+
+            <g className="logo-pan logo-pan-right">
+              <line x1="30.5" y1="10.2" x2="28.5" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <line x1="32" y1="10.2" x2="32" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <line x1="33.5" y1="10.2" x2="35.5" y2="18.5" stroke={INK} strokeWidth="0.75" />
+              <path
+                d="M28 18.8 Q32 22.2 36 18.8 Q32 24.2 28 18.8 Z"
+                fill={SHADE}
+                stroke={INK}
+                strokeWidth="1.15"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M28.8 19.5 Q32 21.5 35.2 19.5"
+                stroke={INK}
+                strokeWidth="0.5"
+                opacity="0.45"
+                clipPath={`url(#${uid}-rpan)`}
+              />
             </g>
           </g>
         </g>

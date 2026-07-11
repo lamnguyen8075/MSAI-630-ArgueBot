@@ -35,12 +35,12 @@ body {
   flex: 1;
 }
 
-/* ── Animated logo (hot air balloon) ──────────────────────── */
+/* ── Animated logo (scales of justice) ───────────────────── */
 
 .logo {
   flex-shrink: 0;
   position: relative;
-  animation: logo-float 3s ease-in-out infinite;
+  animation: logo-float 3.5s ease-in-out infinite;
   will-change: transform;
 }
 
@@ -50,38 +50,22 @@ body {
   overflow: visible;
 }
 
-/* Whole rig bobs vertically */
 .logo-rig {
   transform-origin: 20px 20px;
-  animation: logo-rig-bob 3s ease-in-out infinite;
 }
 
-/* Envelope tilts gently */
-.logo-balloon {
-  transform-origin: 20px 14px;
-  animation: logo-balloon-sway 3s ease-in-out infinite;
+/* Beam tips as proponent vs opponent are weighed */
+.logo-beam-rig {
+  transform-origin: 20px 9px;
+  animation: logo-beam-rock 3.5s ease-in-out infinite;
 }
 
-/* Basket swings opposite the envelope */
-.logo-basket-rig {
-  transform-origin: 20px 34px;
-  animation: logo-basket-swing 3s ease-in-out infinite;
-}
-
-.logo-panels {
-  animation: logo-panels-pulse 3s ease-in-out infinite;
-}
-
-/* Faster when debate is live */
 .logo--live {
-  animation-duration: 1.8s;
+  animation-duration: 2s;
 }
 
-.logo--live .logo-rig,
-.logo--live .logo-balloon,
-.logo--live .logo-basket-rig,
-.logo--live .logo-panels {
-  animation-duration: 1.8s;
+.logo--live .logo-beam-rig {
+  animation-duration: 2s;
 }
 
 @keyframes logo-float {
@@ -90,60 +74,70 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
   }
 }
 
-@keyframes logo-rig-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-@keyframes logo-balloon-sway {
-  0%,
-  100% {
-    transform: rotate(0deg) translateX(0);
-  }
-  25% {
-    transform: rotate(-2.5deg) translateX(-0.5px);
-  }
-  75% {
-    transform: rotate(2.5deg) translateX(0.5px);
-  }
-}
-
-@keyframes logo-basket-swing {
+@keyframes logo-beam-rock {
   0%,
   100% {
     transform: rotate(0deg);
   }
   25% {
-    transform: rotate(4deg);
+    transform: rotate(-4deg);
   }
   75% {
-    transform: rotate(-4deg);
+    transform: rotate(4deg);
   }
 }
 
-@keyframes logo-panels-pulse {
+.logo--live .logo-beam-rig {
+  animation-name: logo-beam-rock-live;
+}
+
+@keyframes logo-beam-rock-live {
   0%,
   100% {
-    opacity: 0.75;
+    transform: rotate(0deg);
   }
-  50% {
-    opacity: 1;
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
   }
 }
 
 .brand-name {
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: -0.02em;
+  display: inline-block;
+  line-height: 1;
+}
+
+.brand-name-inner {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 0.76rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  transform: skewX(-7deg);
+}
+
+.brand-argue {
+  background: linear-gradient(165deg, #6ee7b7 0%, var(--pro) 45%, #059669 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(16, 185, 129, 0.35));
+}
+
+.brand-bot {
+  background: linear-gradient(165deg, #a5b4fc 0%, var(--accent) 50%, #4338ca 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(99, 102, 241, 0.35));
+  margin-left: -0.02em;
 }
 
 .header-score {
@@ -652,10 +646,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .logo,
-  .logo-rig,
-  .logo-balloon,
-  .logo-basket-rig,
-  .logo-panels {
+  .logo-beam-rig {
     animation: none;
   }
 }
