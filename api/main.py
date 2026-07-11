@@ -33,7 +33,7 @@ def _cors_origins() -> list[str]:
     return origins
 
 
-app = FastAPI(title="ArgueBot API", version="1.0.0")
+app = FastAPI(title="ArgueBot API", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -83,6 +83,7 @@ def health() -> dict:
         "has_api_key": cfg.has_api_key,
         "model": cfg.groq_model,
         "auth_enabled": True,
+        "revision": "2026-07-10-restart",
     }
 
 
