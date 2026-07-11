@@ -32,6 +32,9 @@ export function authHeaders(): Record<string, string> {
 }
 
 async function parseError(res: Response): Promise<string> {
+  if (res.status === 404) {
+    return 'Login API not found — redeploy the Render backend to the latest commit.'
+  }
   try {
     const data = await res.json()
     const detail = data.detail
@@ -40,7 +43,7 @@ async function parseError(res: Response): Promise<string> {
   } catch {
     /* ignore */
   }
-  return 'Request failed'
+  return res.status === 401 ? 'Invalid username or password.' : 'Request failed'
 }
 
 export async function login(username: string, password: string): Promise<LoginResponse> {

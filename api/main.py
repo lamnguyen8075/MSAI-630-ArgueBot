@@ -82,6 +82,7 @@ def health() -> dict:
         "status": "ok",
         "has_api_key": cfg.has_api_key,
         "model": cfg.groq_model,
+        "auth_enabled": True,
     }
 
 
