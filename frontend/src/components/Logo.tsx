@@ -88,11 +88,11 @@ export default function Logo({ size = 28, isActive = false }: Props) {
             </g>
 
             <g className="logo-pan logo-pan-left">
-              <line x1="7" y1="11.4" x2="5.5" y2="18.5" stroke={GREY_LIGHT} strokeWidth="0.65" />
-              <line x1="8.5" y1="11.4" x2="8.5" y2="18.5" stroke={GREY} strokeWidth="0.65" />
-              <line x1="10" y1="11.4" x2="11.5" y2="18.5" stroke={GREY_LIGHT} strokeWidth="0.65" />
+              <line x1="7" y1="11.4" x2="2.5" y2="19" stroke={GREY_LIGHT} strokeWidth="0.65" />
+              <line x1="8.5" y1="11.4" x2="8.5" y2="19" stroke={GREY} strokeWidth="0.65" />
+              <line x1="10" y1="11.4" x2="14.5" y2="19" stroke={GREY_LIGHT} strokeWidth="0.65" />
               <path
-                d="M4.5 18.8 Q8.5 21.8 12.5 18.8 Q8.5 24.5 4.5 18.8 Z"
+                d="M2 19 Q8.5 23.2 15 19 Q8.5 26.5 2 19 Z"
                 fill={`url(#${g('pan')})`}
                 stroke={INK}
                 strokeWidth="0.85"
@@ -101,11 +101,11 @@ export default function Logo({ size = 28, isActive = false }: Props) {
             </g>
 
             <g className="logo-pan logo-pan-right">
-              <line x1="30" y1="11.4" x2="28.5" y2="18.5" stroke={GREY_LIGHT} strokeWidth="0.65" />
-              <line x1="31.5" y1="11.4" x2="31.5" y2="18.5" stroke={GREY} strokeWidth="0.65" />
-              <line x1="33" y1="11.4" x2="34.5" y2="18.5" stroke={GREY_LIGHT} strokeWidth="0.65" />
+              <line x1="30" y1="11.4" x2="25.5" y2="19" stroke={GREY_LIGHT} strokeWidth="0.65" />
+              <line x1="31.5" y1="11.4" x2="31.5" y2="19" stroke={GREY} strokeWidth="0.65" />
+              <line x1="33" y1="11.4" x2="37.5" y2="19" stroke={GREY_LIGHT} strokeWidth="0.65" />
               <path
-                d="M27.5 18.8 Q31.5 21.8 35.5 18.8 Q31.5 24.5 27.5 18.8 Z"
+                d="M25 19 Q31.5 23.2 38 19 Q31.5 26.5 25 19 Z"
                 fill={`url(#${g('pan')})`}
                 stroke={INK}
                 strokeWidth="0.85"
