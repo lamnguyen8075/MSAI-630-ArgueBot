@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
 from typing import Any, TypeVar
 
@@ -26,8 +27,11 @@ T = TypeVar("T", bound=BaseModel)
 
 RATE_LIMIT_USER_MESSAGE = (
     "Groq free-tier rate limit reached (~12,000 tokens/min). "
-    "Wait about a minute and try again, or use Demo Mode."
+    "The debate will retry automatically — or wait a minute and use Demo Mode."
 )
+
+# Serialize all Groq calls across users/debates on one API key.
+_groq_global_lock = threading.Lock()
 
 
 def setup_logging(level: int = logging.INFO) -> None:
@@ -103,51 +107,52 @@ class LLMClient:
             raise RuntimeError(
                 "Groq API key is not configured. Set GROQ_API_KEY or use Demo Mode."
             )
-        self._throttle()
-        last_error: Exception | None = None
-        for attempt in range(self.max_retries + 1):
-            try:
-                response = self._client.chat.completions.create(
-                    model=self.model,
-                    **kwargs,
-                )
-                content = response.choices[0].message.content
-                if not content:
-                    raise ValueError("Empty response from model.")
-                return content.strip()
-            except RateLimitError as exc:
-                last_error = exc
-                if attempt < self.max_retries:
-                    _rate_limit_wait(exc)
-            except (APITimeoutError, APIConnectionError) as exc:
-                last_error = exc
-                logger.warning("Network error (attempt %d): %s", attempt + 1, exc)
-                if attempt < self.max_retries:
-                    time.sleep(min(2 ** attempt, 10))
-            except NotFoundError as exc:
-                raise RuntimeError(
-                    f"Invalid model name '{self.model}'. Check GROQ_MODEL."
-                ) from exc
-            except BadRequestError as exc:
-                error_msg = str(exc).lower()
-                if "model" in error_msg and (
-                    "not found" in error_msg
-                    or "invalid" in error_msg
-                    or "does not exist" in error_msg
-                ):
+        with _groq_global_lock:
+            self._throttle()
+            last_error: Exception | None = None
+            for attempt in range(self.max_retries + 1):
+                try:
+                    response = self._client.chat.completions.create(
+                        model=self.model,
+                        **kwargs,
+                    )
+                    content = response.choices[0].message.content
+                    if not content:
+                        raise ValueError("Empty response from model.")
+                    return content.strip()
+                except RateLimitError as exc:
+                    last_error = exc
+                    if attempt < self.max_retries:
+                        _rate_limit_wait(exc)
+                except (APITimeoutError, APIConnectionError) as exc:
+                    last_error = exc
+                    logger.warning("Network error (attempt %d): %s", attempt + 1, exc)
+                    if attempt < self.max_retries:
+                        time.sleep(min(2 ** attempt, 10))
+                except NotFoundError as exc:
                     raise RuntimeError(
                         f"Invalid model name '{self.model}'. Check GROQ_MODEL."
                     ) from exc
-                last_error = exc
-                logger.error("Bad request: %s", exc)
-                if attempt >= self.max_retries:
-                    raise RuntimeError(f"API request failed: {exc}") from exc
-            except Exception as exc:
-                last_error = exc
-                logger.error("API request failed: %s", exc)
-                if attempt < self.max_retries:
-                    time.sleep(1)
-        raise RuntimeError(_friendly_error(last_error or RuntimeError("Unknown error")))
+                except BadRequestError as exc:
+                    error_msg = str(exc).lower()
+                    if "model" in error_msg and (
+                        "not found" in error_msg
+                        or "invalid" in error_msg
+                        or "does not exist" in error_msg
+                    ):
+                        raise RuntimeError(
+                            f"Invalid model name '{self.model}'. Check GROQ_MODEL."
+                        ) from exc
+                    last_error = exc
+                    logger.error("Bad request: %s", exc)
+                    if attempt >= self.max_retries:
+                        raise RuntimeError(f"API request failed: {exc}") from exc
+                except Exception as exc:
+                    last_error = exc
+                    logger.error("API request failed: %s", exc)
+                    if attempt < self.max_retries:
+                        time.sleep(1)
+            raise RuntimeError(_friendly_error(last_error or RuntimeError("Unknown error")))
 
     def generate_text(
         self,

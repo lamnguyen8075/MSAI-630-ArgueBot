@@ -112,6 +112,12 @@ class DebateManager:
     def config(self) -> AppConfig:
         return self._config
 
+    def has_running_live_debate(self) -> bool:
+        for session in self._sessions.values():
+            if session.state and session.state.status == DebateStatus.RUNNING:
+                return True
+        return False
+
     def create_session(self) -> DebateSession:
         debate_id = str(uuid4())
         session = DebateSession(debate_id, self._config)

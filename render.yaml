@@ -15,4 +15,4 @@ services:
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
       - key: GROQ_REQUEST_DELAY
-        value: "12"
+        value: "18"

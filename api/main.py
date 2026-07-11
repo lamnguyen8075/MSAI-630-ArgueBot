@@ -94,6 +94,11 @@ def start_debate(req: StartDebateRequest, username: str = Depends(require_user))
             status_code=400,
             detail="Groq API key is not configured. Use Demo Mode or set GROQ_API_KEY.",
         )
+    if manager.has_running_live_debate():
+        raise HTTPException(
+            status_code=409,
+            detail="Another live debate is already running. Wait for it to finish, then try again.",
+        )
     consume_live_test(username)
     try:
         debate_config = DebateConfig(

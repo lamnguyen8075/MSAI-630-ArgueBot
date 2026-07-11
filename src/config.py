@@ -13,7 +13,7 @@ DEFAULT_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_TIMEOUT = 120
 MAX_RETRIES = 5
 # Free Groq tier (~12K TPM): space requests to stay under the limit.
-DEFAULT_REQUEST_DELAY = 12
+DEFAULT_REQUEST_DELAY = 18
 
 
 @dataclass(frozen=True)
