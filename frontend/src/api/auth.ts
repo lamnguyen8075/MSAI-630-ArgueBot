@@ -31,6 +31,23 @@ export function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+const API_TIMEOUT_MS = 20_000
+
+async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Server is slow to respond — try again in a moment.')
+    }
+    throw err
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 async function parseError(res: Response): Promise<string> {
   if (res.status === 404) {
     return 'Login API not found — redeploy the Render backend to the latest commit.'
@@ -47,7 +64,7 @@ async function parseError(res: Response): Promise<string> {
 }
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(apiUrl('/api/auth/login'), {
+  const res = await fetchWithTimeout(apiUrl('/api/auth/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -59,8 +76,11 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 
 export async function fetchMe(): Promise<AuthUser> {
-  const res = await fetch(apiUrl('/api/auth/me'), { headers: authHeaders() })
-  if (!res.ok) throw new Error(await parseError(res))
+  const res = await fetchWithTimeout(apiUrl('/api/auth/me'), { headers: authHeaders() })
+  if (!res.ok) {
+    if (res.status === 401) clearStoredToken()
+    throw new Error(await parseError(res))
+  }
   return res.json()
 }
 

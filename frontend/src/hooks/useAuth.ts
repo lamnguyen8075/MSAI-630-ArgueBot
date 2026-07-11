@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AuthUser } from '../api/auth'
-import { fetchMe, getStoredToken, logout as apiLogout } from '../api/auth'
+import { clearStoredToken, fetchMe, getStoredToken, logout as apiLogout } from '../api/auth'
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -12,9 +12,13 @@ export function useAuth() {
       setLoading(false)
       return
     }
+
     fetchMe()
       .then(setUser)
-      .catch(() => setUser(null))
+      .catch(() => {
+        clearStoredToken()
+        setUser(null)
+      })
       .finally(() => setLoading(false))
   }, [])
 

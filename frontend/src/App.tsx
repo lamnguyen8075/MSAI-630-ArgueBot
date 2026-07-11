@@ -58,7 +58,11 @@ export default function App() {
   const handleSeed = (seedTopic: string) => startDebate(seedTopic)
 
   if (authLoading) {
-    return <div className="login-shell"><p className="login-sub">Loading…</p></div>
+    return (
+      <div className="login-shell">
+        <p className="login-sub">Connecting to server…</p>
+      </div>
+    )
   }
 
   if (!user) {
