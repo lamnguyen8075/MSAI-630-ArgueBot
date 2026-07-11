@@ -4,8 +4,9 @@ const TOKEN_KEY = 'arguebot_token'
 
 export interface AuthUser {
   username: string
-  remaining_live_tests: number
-  max_live_tests: number
+  is_master: boolean
+  remaining_live_tests: number | null
+  max_live_tests: number | null
   live_tests_used?: number
 }
 

@@ -86,5 +86,38 @@ def test_live_quota_enforced(client, monkeypatch):
     res = client.post("/api/debates/start", json=payload, headers=headers)
     assert res.status_code == 403
 
+def test_master_unlimited(client, monkeypatch):
+    monkeypatch.setattr("api.main.manager.config.has_api_key", True)
+
+    class FakeSession:
+        debate_id = "test-debate"
+
+        def start(self, _config):
+            return None
+
+    monkeypatch.setattr("api.main.manager.create_session", lambda: FakeSession())
+
+    login = client.post("/api/auth/login", json={"username": "lam", "password": "lam1"})
+    assert login.status_code == 200
+    data = login.json()
+    assert data["is_master"] is True
+    assert data["remaining_live_tests"] is None
+
+    token = data["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "topic": "Universities should adopt pass/fail grading for intro courses.",
+        "background_context": "",
+        "style": "Academic",
+        "configured_rounds": 6,
+        "response_length": "Concise",
+        "stress_test": False,
+    }
+
+    for _ in range(5):
+        res = client.post("/api/debates/start", json=payload, headers=headers)
+        assert res.status_code == 200
+
     me = client.get("/api/auth/me", headers=headers)
-    assert me.json()["remaining_live_tests"] == 0
+    assert me.json()["is_master"] is True
+    assert me.json()["remaining_live_tests"] is None

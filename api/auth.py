@@ -11,13 +11,17 @@ from fastapi import Header, HTTPException
 
 MAX_LIVE_TESTS = 2
 
-# username -> password
+# Team accounts — 2 live debates each
 ACCOUNTS: dict[str, str] = {
     "banana": "banana1",
     "orange": "orange1",
     "apple": "apple1",
     "grape": "grape1",
+    "lam": "lam1",
 }
+
+# Master account — unlimited live debates
+MASTER_USERS = {"lam"}
 
 USAGE_FILE = Path(__file__).parent / "usage_store.json"
 _lock = threading.Lock()
@@ -42,6 +46,10 @@ def _save_usage() -> None:
 _load_usage()
 
 
+def is_master(username: str) -> bool:
+    return username in MASTER_USERS
+
+
 def login(username: str, password: str) -> dict:
     user = username.strip().lower()
     if user not in ACCOUNTS or ACCOUNTS[user] != password:
@@ -51,12 +59,7 @@ def login(username: str, password: str) -> dict:
     with _lock:
         _sessions[token] = user
 
-    return {
-        "token": token,
-        "username": user,
-        "remaining_live_tests": remaining_tests(user),
-        "max_live_tests": MAX_LIVE_TESTS,
-    }
+    return _auth_payload(user, token)
 
 
 def logout(token: str) -> None:
@@ -64,18 +67,29 @@ def logout(token: str) -> None:
         _sessions.pop(token, None)
 
 
-def remaining_tests(username: str) -> int:
+def remaining_tests(username: str) -> int | None:
+    if is_master(username):
+        return None
     used = _usage.get(username, 0)
     return max(0, MAX_LIVE_TESTS - used)
 
 
 def user_info(username: str) -> dict:
-    return {
+    return _auth_payload(username)
+
+
+def _auth_payload(username: str, token: str | None = None) -> dict:
+    master = is_master(username)
+    payload = {
         "username": username,
+        "is_master": master,
         "remaining_live_tests": remaining_tests(username),
-        "max_live_tests": MAX_LIVE_TESTS,
+        "max_live_tests": None if master else MAX_LIVE_TESTS,
         "live_tests_used": _usage.get(username, 0),
     }
+    if token is not None:
+        payload["token"] = token
+    return payload
 
 
 def require_user(authorization: str | None = Header(default=None)) -> str:
@@ -93,6 +107,9 @@ def require_user(authorization: str | None = Header(default=None)) -> str:
 
 
 def consume_live_test(username: str) -> None:
+    if is_master(username):
+        return
+
     with _lock:
         used = _usage.get(username, 0)
         if used >= MAX_LIVE_TESTS:

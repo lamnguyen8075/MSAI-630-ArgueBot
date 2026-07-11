@@ -112,15 +112,17 @@ flowchart TB
 
 Live debates use the shared Groq API key, so access is limited to four team accounts:
 
-| Username | Password |
-|----------|----------|
-| `banana` | `banana1` |
-| `orange` | `orange1` |
-| `apple` | `apple1` |
-| `grape` | `grape1` |
+| Username | Password | Assigned to | Live tests |
+|----------|----------|-------------|------------|
+| `lam` | `lam1` | Huy Lam Nguyen (master) | Unlimited |
+| `apple` | `apple1` | Ginevra Capo | 2 |
+| `banana` | `banana1` | Sampath Kumar Neella | 2 |
+| `grape` | `grape1` | Happy Pravallika Isaac Peddapaaga | 2 |
+| `orange` | `orange1` | Varun Ketan Varia | 2 |
 
 - Sign in on the login screen before using the app.
-- Each account may start **2 live debates** total (tracked server-side in `api/usage_store.json`).
+- Each team account may start **2 live debates** total (tracked server-side in `api/usage_store.json`).
+- The **master account** (`lam`) has **unlimited** live debates.
 - **Demo Mode** does not count against the limit and does not require Groq calls.
 - `POST /api/debates/start` requires a valid `Authorization: Bearer <token>` header.
 

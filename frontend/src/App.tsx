@@ -70,7 +70,7 @@ export default function App() {
   const displayTopic = topic ?? motion
   const showChat = state || isRunning
   const hasApiKey = health?.has_api_key ?? false
-  const canRunLive = user.remaining_live_tests > 0
+  const canRunLive = user.is_master || (user.remaining_live_tests ?? 0) > 0
 
   return (
     <div className="app-shell">
@@ -83,7 +83,9 @@ export default function App() {
         <div className="header-user">
           <span className="header-username">{user.username}</span>
           <span className="header-quota">
-            {user.remaining_live_tests}/{user.max_live_tests} live tests left
+            {user.is_master
+              ? 'Unlimited live tests'
+              : `${user.remaining_live_tests}/${user.max_live_tests} live tests left`}
           </span>
           <button type="button" className="header-logout" onClick={() => logout()}>
             Log out
