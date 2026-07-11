@@ -21,7 +21,8 @@ Unlike free-form multi-agent chat, ArgueBot uses a **central orchestrator** with
 flowchart TB
     subgraph UI["React UI (Vite)"]
         App[App.tsx]
-        Logo[Logo]
+        Logo[Logo — scales SVG]
+        Avatars[AgentAvatar]
         ChatThread[ChatThread]
         Composer[ChatComposer]
         Hook[useDebate hook]
@@ -65,6 +66,7 @@ flowchart TB
     WS --> Hook
     Hook --> ChatThread
     ChatThread --> Typewriter
+    ChatThread --> Avatars
     Composer --> Seeds
 ```
 
@@ -72,7 +74,7 @@ flowchart TB
 
 | Layer | Responsibility |
 |-------|----------------|
-| **React UI** | Chat-style interface — motion input, live transcript, typewriter animation, header score, verdict, export |
+| **React UI** | Light chat-style interface — motion input, live transcript, typewriter animation, animal avatars, header score, verdict, export |
 | **FastAPI** | REST endpoints for start/stop/demo/export; WebSocket streams per-debate state updates |
 | **DebateManager** | In-memory session registry; runs each debate in a background thread |
 | **DebateOrchestrator** | Deterministic turn plan, agent dispatch, judge scoring checkpoints, final verdict |
@@ -94,15 +96,58 @@ flowchart TB
 - Autonomous 6–10 round structured debates
 - Four distinct agent personas with role-consistency enforcement
 - **Chat-style UI** with turn-by-turn typewriter animation and typing indicators
+- **Animal avatars** — Twemoji pictograms per agent (Duck, Tiger, Fish, Giraffe) plus a Chicken avatar for user-submitted motions
 - Live score display in the header (cumulative proponent vs. opponent)
-- **Academic seed motions** — pre-loaded university debate topics for quick demos
-- Animated SVG logo (speeds up during live debates)
+- **Academic seed motions** — six pre-loaded university debate topics for quick demos
+- **Animated scales logo** — compact monochrome SVG in the header and welcome screen; beam rocks faster during live debates
 - Weighted 100-point scoring rubric with programmatic validation
 - Automatic retry on severe persona collapse
 - Failure analysis with violation logging (backend)
 - Demo Mode with prerecorded sample debate (no API key required)
 - Export transcript (Markdown) and full debate record (JSON)
 - Optional stress-test mode for role-consistency validation
+- **Team login** — four hardcoded fruit accounts; each gets **2 live debate tests** (demo mode unlimited)
+
+## Team access
+
+Live debates use the shared Groq API key, so access is limited to four team accounts:
+
+| Username | Password |
+|----------|----------|
+| `banana` | `banana1` |
+| `orange` | `orange1` |
+| `apple` | `apple1` |
+| `grape` | `grape1` |
+
+- Sign in on the login screen before using the app.
+- Each account may start **2 live debates** total (tracked server-side in `api/usage_store.json`).
+- **Demo Mode** does not count against the limit and does not require Groq calls.
+- `POST /api/debates/start` requires a valid `Authorization: Bearer <token>` header.
+
+## UI Design
+
+The React frontend uses a **minimal light chat layout** — no dark theme or glass effects:
+
+| Element | Description |
+|---------|-------------|
+| **Layout** | Centered column (max 820px), `#f7f7f8` chat background, white header/composer |
+| **Typography** | Plus Jakarta Sans |
+| **Logo** | Animated scales of justice (`Logo.tsx`) — soft grey, white, and light grey only; 28px in the header, 52px on the welcome screen; gentle bob plus beam tilt (±4° idle, ±6° live) |
+| **Wordmark** | Plain **ArgueBot** text beside the logo — not styled as word art |
+| **Agent bubbles** | Color-coded borders (emerald proponent, rose opponent, blue moderator, amber judge) with round labels |
+| **Avatars** | Twemoji CDN images via `AgentAvatar.tsx` |
+| **Seed chips** | Four academic topics shown on the welcome screen; full list in `seedMotions.ts` |
+
+### Academic seed motions
+
+| Label | Motion |
+|-------|--------|
+| AI in coursework | Universities should permit students to use generative AI tools for graded assignments. |
+| Open textbooks | Universities should require faculty to adopt open educational resources instead of commercial textbooks. |
+| Attendance policy | Universities should require mandatory in-person attendance for undergraduate lecture courses. |
+| Liberal arts core | All undergraduate students should complete a required liberal arts core curriculum regardless of major. |
+| Pass/fail grading | Introductory-level university courses should use pass/fail grading instead of letter grades. |
+| Flipped classroom | Universities should adopt the flipped classroom model as the default for large introductory courses. |
 
 ## Setup
 
@@ -190,6 +235,21 @@ Open the URL shown in the terminal (typically `http://localhost:8501`).
 ### Demo Mode
 
 If no API key is configured, Demo Mode is enabled automatically. Toggle it in the bottom composer bar, or pick a seed topic to replay the prerecorded sample debate. Demo Mode is clearly labeled as simulated data.
+
+### Production deployment
+
+ArgueBot is set up for a **split deployment**:
+
+| Component | Host | Config |
+|-----------|------|--------|
+| **API backend** | [Render](https://render.com) | `render.yaml` + `Dockerfile`; set `GROQ_API_KEY` in the Render dashboard |
+| **React frontend** | GitHub Pages | `.github/workflows/deploy-frontend.yml` builds and deploys on push to `main` when `frontend/` changes |
+
+**GitHub Pages URL:** `https://lamnguyen8075.github.io/MSAI-630-ArgueBot/`
+
+After deploying the Render API, set the GitHub repository variable **`VITE_API_URL`** to your Render service URL (e.g. `https://arguebot-api.onrender.com`) so the Pages build can reach the backend. CORS for the GitHub Pages origin is allowed by default in the API.
+
+For a **single-server** local or self-hosted build, see **Production build (single server)** under React UI above.
 
 ## How to Run Tests
 
@@ -295,7 +355,7 @@ Cumulative scores are the **arithmetic mean** of each side's weighted totals acr
 1. **Before the session:** Test Demo Mode as a fallback. Verify API key and model in `.env`. Start both API and React dev servers.
 2. **Opening:** Explain the four-agent architecture, central orchestrator, and WebSocket streaming pipeline.
 3. **Audience topic:** Enter a motion suggested by the audience (minimum 10 characters), or pick an academic seed topic.
-4. **During debate:** Point out the animated logo, typing indicator, live header score, and turn-by-turn typewriter reveal.
+4. **During debate:** Point out the rocking scales logo, animal avatars, typing indicator, live header score, and turn-by-turn typewriter reveal.
 5. **After verdict:** Walk through the inline verdict card — decisive factors, limitations, and export options.
 6. **Stress test:** Only enable if time permits — demonstrate persona-collapse resistance via API config.
 7. **Export:** Download transcript and JSON for audience follow-up.
@@ -305,23 +365,33 @@ Cumulative scores are the **arithmetic mean** of each side's weighted totals acr
 ```
 arguebot/
 ├── app.py                      # Streamlit UI (legacy)
+├── Dockerfile                  # Render API container
+├── render.yaml                 # Render Blueprint (API service)
+├── .github/workflows/
+│   └── deploy-frontend.yml     # GitHub Pages CI/CD
 ├── api/
 │   ├── main.py                 # FastAPI REST + WebSocket endpoints
+│   ├── auth.py                 # Team login + live-test quotas
 │   └── debate_manager.py       # DebateSession + DebateManager (threading + WS broadcast)
 ├── frontend/                   # React + Vite chat UI
 │   ├── src/
 │   │   ├── App.tsx             # Main shell — header, chat, composer
-│   │   ├── App.css             # Chat UI styles
+│   │   ├── App.css             # Chat UI + logo animation styles
+│   │   ├── index.css           # Theme tokens (colors, typography)
 │   │   ├── seedMotions.ts      # Academic seed debate topics
 │   │   ├── turnPlan.ts         # Turn order for typing indicator
+│   │   ├── types.ts            # Types + AGENT_META avatars
 │   │   ├── components/
-│   │   │   ├── Logo.tsx        # Animated SVG logo
+│   │   │   ├── LoginPage.tsx   # Team login screen
+│   │   │   ├── Logo.tsx        # Animated scales-of-justice SVG
+│   │   │   ├── AgentAvatar.tsx # Twemoji agent pictograms
 │   │   │   ├── ChatThread.tsx  # Transcript with round dividers
 │   │   │   ├── ChatBubble.tsx  # Agent message bubbles + typewriter
 │   │   │   ├── ChatComposer.tsx# Motion input, seeds, demo toggle
 │   │   │   ├── TypingIndicator.tsx
 │   │   │   └── ExportButtons.tsx
 │   │   ├── hooks/
+│   │   │   ├── useAuth.ts      # Login session + quota display
 │   │   │   ├── useDebate.ts    # WebSocket state, demo replay, typing
 │   │   │   └── useTypewriter.ts
 │   │   └── api/
@@ -349,7 +419,10 @@ arguebot/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/health` | API status and API-key availability |
-| `POST` | `/api/debates/start` | Start a live debate; returns `debate_id` |
+| `POST` | `/api/auth/login` | Team login; returns bearer token + remaining live tests |
+| `GET` | `/api/auth/me` | Current user and live-test quota (requires auth) |
+| `POST` | `/api/auth/logout` | Invalidate session token |
+| `POST` | `/api/debates/start` | Start a live debate (auth + quota required); returns `debate_id` |
 | `POST` | `/api/debates/demo` | Load prerecorded demo debate |
 | `GET` | `/api/debates/{id}` | Fetch current debate state |
 | `POST` | `/api/debates/{id}/stop` | Request graceful stop |

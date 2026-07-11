@@ -6,12 +6,13 @@ import asyncio
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from api.auth import consume_live_test, login, logout, require_user, user_info
 from api.debate_manager import manager
 from src.models import DebateConfig, DebateStyle, ResponseLength
 from src.utils import setup_logging
@@ -52,6 +53,28 @@ class StartDebateRequest(BaseModel):
     stress_test: bool = False
 
 
+class LoginRequest(BaseModel):
+    username: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
+
+
+@app.post("/api/auth/login")
+def auth_login(req: LoginRequest) -> dict:
+    return login(req.username, req.password)
+
+
+@app.get("/api/auth/me")
+def auth_me(username: str = Depends(require_user)) -> dict:
+    return user_info(username)
+
+
+@app.post("/api/auth/logout")
+def auth_logout_endpoint(authorization: str | None = Header(default=None)) -> dict:
+    if authorization and authorization.startswith("Bearer "):
+        logout(authorization.removeprefix("Bearer ").strip())
+    return {"status": "ok"}
+
+
 @app.get("/api/health")
 def health() -> dict:
     cfg = manager.config
@@ -63,12 +86,13 @@ def health() -> dict:
 
 
 @app.post("/api/debates/start")
-def start_debate(req: StartDebateRequest) -> dict:
+def start_debate(req: StartDebateRequest, username: str = Depends(require_user)) -> dict:
     if not manager.config.has_api_key:
         raise HTTPException(
             status_code=400,
             detail="Groq API key is not configured. Use Demo Mode or set GROQ_API_KEY.",
         )
+    consume_live_test(username)
     try:
         debate_config = DebateConfig(
             topic=req.topic,

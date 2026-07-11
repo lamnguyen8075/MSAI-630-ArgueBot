@@ -10,6 +10,7 @@ interface Props {
   demoMode: boolean
   isRunning: boolean
   hasApiKey: boolean
+  liveBlocked?: boolean
   placeholder?: string
 }
 
@@ -23,6 +24,7 @@ export default function ChatComposer({
   demoMode,
   isRunning,
   hasApiKey,
+  liveBlocked = false,
   placeholder = 'Propose a debate motion…',
 }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -85,8 +87,12 @@ export default function ChatComposer({
         >
           {demoMode ? '● Demo on' : 'Demo off'}
         </button>
-        <span className={`nav-status ${hasApiKey ? 'ok' : 'warn'}`}>
-          {hasApiKey ? 'Groq connected' : 'No API key'}
+        <span className={`nav-status ${hasApiKey && !liveBlocked ? 'ok' : 'warn'}`}>
+          {liveBlocked
+            ? 'No live tests left'
+            : hasApiKey
+              ? 'Live ready'
+              : 'No API key'}
         </span>
       </nav>
     </footer>

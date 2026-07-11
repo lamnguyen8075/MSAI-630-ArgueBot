@@ -3,11 +3,14 @@ import './App.css'
 import ChatThread from './components/ChatThread'
 import ChatComposer from './components/ChatComposer'
 import ExportButtons from './components/ExportButtons'
+import LoginPage from './components/LoginPage'
 import Logo from './components/Logo'
+import { useAuth } from './hooks/useAuth'
 import { useDebate } from './hooks/useDebate'
 import { SEED_MOTIONS } from './seedMotions'
 
 export default function App() {
+  const { user, loading: authLoading, loginSuccess, logout, refreshUser } = useAuth()
   const {
     health,
     state,
@@ -30,7 +33,7 @@ export default function App() {
     if (health) setDemoMode(!health.has_api_key)
   }, [health])
 
-  const startDebate = (text: string) => {
+  const startDebate = async (text: string) => {
     const trimmed = text.trim()
     if (trimmed.length < 10) return
 
@@ -41,7 +44,7 @@ export default function App() {
       return
     }
 
-    runLive({
+    await runLive({
       topic: trimmed,
       background_context: '',
       style: 'Academic',
@@ -49,15 +52,25 @@ export default function App() {
       response_length: 'Concise',
       stress_test: false,
     })
+    await refreshUser()
   }
 
   const handleSeed = (seedTopic: string) => startDebate(seedTopic)
+
+  if (authLoading) {
+    return <div className="login-shell"><p className="login-sub">Loading…</p></div>
+  }
+
+  if (!user) {
+    return <LoginPage onLogin={loginSuccess} />
+  }
 
   const cumulative = state?.cumulative_scores
   const verdict = state?.final_verdict
   const displayTopic = topic ?? motion
   const showChat = state || isRunning
   const hasApiKey = health?.has_api_key ?? false
+  const canRunLive = user.remaining_live_tests > 0
 
   return (
     <div className="app-shell">
@@ -65,6 +78,16 @@ export default function App() {
         <div className="brand">
           <Logo size={28} isActive={isRunning} />
           <span className="brand-name">ArgueBot</span>
+        </div>
+
+        <div className="header-user">
+          <span className="header-username">{user.username}</span>
+          <span className="header-quota">
+            {user.remaining_live_tests}/{user.max_live_tests} live tests left
+          </span>
+          <button type="button" className="header-logout" onClick={() => logout()}>
+            Log out
+          </button>
         </div>
 
         {cumulative && cumulative.rounds_scored > 0 && (
@@ -86,6 +109,9 @@ export default function App() {
             <Logo size={52} isActive={isRunning} />
             <h1>What should they debate?</h1>
             <p>Four AI agents argue your motion — turn by turn, like a live panel.</p>
+            {!canRunLive && hasApiKey && (
+              <p className="hero-quota">No live tests left on this account. Demo Mode still works.</p>
+            )}
             <div className="hero-seeds">
               {SEED_MOTIONS.slice(0, 4).map((seed) => (
                 <button
@@ -139,7 +165,8 @@ export default function App() {
         onToggleDemo={() => setDemoMode((d) => !d)}
         demoMode={demoMode}
         isRunning={isRunning}
-        hasApiKey={hasApiKey}
+        hasApiKey={hasApiKey && canRunLive}
+        liveBlocked={hasApiKey && !canRunLive}
       />
     </div>
   )

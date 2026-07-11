@@ -1,4 +1,5 @@
 import type { DebateState, HealthResponse, StartDebateRequest, WsEvent } from '../types'
+import { authHeaders } from './auth'
 import { apiUrl, wsUrl } from './config'
 
 export async function fetchHealth(): Promise<HealthResponse> {
@@ -10,11 +11,11 @@ export async function fetchHealth(): Promise<HealthResponse> {
 export async function startDebate(config: StartDebateRequest): Promise<{ debate_id: string }> {
   const res = await fetch(apiUrl('/api/debates/start'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(config),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.detail || 'Failed to start debate')
+  if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Failed to start debate')
   return data
 }
 
